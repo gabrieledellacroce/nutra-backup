@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestione Configurazioni - Nutragenix Fatture</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        
+        .status.success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        
+        .status.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+        
+        .status.info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #93c5fd;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #374151;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #4f46e5;
+        }
+        
+        .form-group .description {
+            font-size: 14px;
+            color: #6b7280;
+            margin-top: 5px;
+        }
+        
+        .button {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-right: 10px;
+        }
+        
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);
+        }
+        
+        .button.secondary {
+            background: #6b7280;
+        }
+        
+        .button.secondary:hover {
+            box-shadow: 0 10px 20px rgba(107, 114, 128, 0.3);
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #4f46e5;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 Gestione Configurazioni</h1>
+            <p>Configura le variabili di ambiente per Nutragenix Fatture</p>
+        </div>
+        
+        <div class="content">
+            <div id="status" class="status hidden"></div>
+            
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>Caricamento configurazioni...</p>
+            </div>
+            
+            <form id="configForm" class="hidden">
+                <div class="form-group">
+                    <label for="FIC_CLIENT_ID">Client ID Fatture in Cloud</label>
+                    <input type="text" id="FIC_CLIENT_ID" name="FIC_CLIENT_ID" required>
+                    <div class="description">ID client OAuth2 di Fatture in Cloud</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="FIC_CLIENT_SECRET">Client Secret Fatture in Cloud</label>
+                    <input type="password" id="FIC_CLIENT_SECRET" name="FIC_CLIENT_SECRET" required>
+                    <div class="description">Secret client OAuth2 di Fatture in Cloud</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="FIC_COMPANY_ID">Company ID Fatture in Cloud</label>
+                    <input type="text" id="FIC_COMPANY_ID" name="FIC_COMPANY_ID" required>
+                    <div class="description">ID della tua azienda in Fatture in Cloud</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="BASE_URL">Base URL (opzionale)</label>
+                    <input type="url" id="BASE_URL" name="BASE_URL">
+                    <div class="description">URL base dell'applicazione (auto-rilevato se vuoto)</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="MONGODB_URI">MongoDB URI</label>
+                    <input type="text" id="MONGODB_URI" name="MONGODB_URI" required>
+                    <div class="description">Connection string per MongoDB Atlas</div>
+                </div>
+                
+                <div style="margin-top: 30px;">
+                    <button type="submit" class="button">💾 Salva Configurazioni</button>
+                    <button type="button" class="button secondary" onclick="loadConfig()">🔄 Ricarica</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        // Carica configurazioni all'avvio
+        document.addEventListener('DOMContentLoaded', loadConfig);
+        
+        // Gestione form
+        document.getElementById('configForm').addEventListener('submit', saveConfig);
+        
+        async function loadConfig() {
+            showLoading(true);
+            hideStatus();
+            
+            try {
+                const response = await fetch('/api/config/manage');
+                const data = await response.json();
+                
+                if (data.success) {
+                    populateForm(data.config);
+                    showStatus('Configurazioni caricate con successo', 'success');
+                } else {
+                    throw new Error(data.message || 'Errore nel caricamento');
+                }
+            } catch (error) {
+                console.error('Errore:', error);
+                showStatus('Errore nel caricamento delle configurazioni: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        async function saveConfig(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(event.target);
+            const config = {};
+            
+            for (const [key, value] of formData.entries()) {
+                config[key] = value;
+            }
+            
+            showLoading(true);
+            hideStatus();
+            
+            try {
+                const response = await fetch('/api/config/manage', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(config)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showStatus('Configurazioni salvate con successo!', 'success');
+                } else {
+                    throw new Error(data.message || 'Errore nel salvataggio');
+                }
+            } catch (error) {
+                console.error('Errore:', error);
+                showStatus('Errore nel salvataggio: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        function populateForm(config) {
+            for (const [key, value] of Object.entries(config)) {
+                const input = document.getElementById(key);
+                if (input) {
+                    input.value = value === '***NASCOSTO***' ? '' : (value || '');
+                }
+            }
+        }
+        
+        function showLoading(show) {
+            const loading = document.getElementById('loading');
+            const form = document.getElementById('configForm');
+            
+            if (show) {
+                loading.classList.remove('hidden');
+                form.classList.add('hidden');
+            } else {
+                loading.classList.add('hidden');
+                form.classList.remove('hidden');
+            }
+        }
+        
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.classList.remove('hidden');
+        }
+        
+        function hideStatus() {
+            const status = document.getElementById('status');
+            status.classList.add('hidden');
+        }
+    </script>
+</body>
+</html>

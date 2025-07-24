@@ -1,0 +1,10 @@
+{
+  "data": {
+    "sink": "https://nutragenix-fatture-qlzulkde3-gabrieledellacroce-2606s-projects.vercel.app/api/webhook",
+    "verified": false,
+    "types": [
+      "it.fattureincloud.webhooks.receipts.create",
+      "it.fattureincloud.webhooks.receipts.update"
+    ]
+  }
+}

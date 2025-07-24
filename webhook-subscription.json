@@ -1,0 +1,24 @@
+{
+  "id": "SUB2050",
+  "sink": "https://nutragenix-fatture-qlzulkde3-gabrieledellacroce-2606s-projects.vercel.app/api/webhook",
+  "types": [
+    "receipts.create",
+    "receipts.update"
+  ],
+  "created_at": "2025-07-22T15:58:15.373Z",
+  "response": {
+    "data": {
+      "id": "SUB2050",
+      "sink": "https://nutragenix-fatture-qlzulkde3-gabrieledellacroce-2606s-projects.vercel.app/api/webhook",
+      "verified": false,
+      "types": [],
+      "config": {
+        "mapping": "binary"
+      }
+    },
+    "warnings": [
+      "The 'receipts.create' event does not exist.",
+      "The 'receipts.update' event does not exist."
+    ]
+  }
+}

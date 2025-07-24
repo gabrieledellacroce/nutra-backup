@@ -1,0 +1,43 @@
+# File di test
+test-*.sh
+*test*.sh
+
+# File di documentazione
+*.md
+
+# File di configurazione locale
+webhook-manager.html
+config.html
+email-config.html
+get_token.js
+webhook-payload.json
+deploy-env.sh
+register-webhook-now.sh
+
+# Directory di servizio webhook locale
+webhook-service/
+
+# File di backup
+*.backup
+*.bak
+*.old
+
+# File temporanei
+*.tmp
+*.temp
+
+# Log files
+*.log
+logs/
+
+# Cache
+.cache/
+.next/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

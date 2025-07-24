@@ -1,0 +1,20 @@
+{
+  "name": "shopify-fic-integration",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "vercel dev",
+    "token:generate": "node generate-token.js",
+    "token:setup": "node manual-token-setup.js",
+    "webhook:setup": "node setup-webhook.js",
+    "webhook:list": "node setup-webhook.js --list",
+    "webhook:help": "node setup-webhook.js --help",
+    "test:webhook": "./test-webhook-email.sh",
+    "test:receipt": "./test-ricevuta-email-completo.sh"
+  },
+  "dependencies": {
+    "dotenv": "^17.1.0",
+    "mongodb": "^6.17.0",
+    "node-fetch": "^2.7.0",
+    "nodemailer": "^6.10.1"
+  }
+}
