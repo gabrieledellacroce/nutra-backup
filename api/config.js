@@ -177,13 +177,47 @@ async function getConfigWithFallback(key) {
   }
 }
 
-module.exports = {
-  saveConfig,
-  loadConfig,
-  getConfig,
-  getAllConfig,
-  updateConfig,
-  validateConfig,
-  invalidateCache,
-  getConfigWithFallback
-};
+// Handler per Vercel API
+async function handler(req, res) {
+  try {
+    const { method } = req;
+    const { action } = req.query;
+
+    if (method === 'GET') {
+      if (action === 'check_email') {
+        // Importa la funzione di controllo email
+        const { checkEmailConfiguration } = require('./email');
+        const emailStatus = await checkEmailConfiguration();
+        return res.status(200).json(emailStatus);
+      }
+      
+      // Restituisce tutte le configurazioni
+      const config = await getAllConfig();
+      return res.status(200).json(config);
+    }
+
+    if (method === 'POST') {
+      const configData = req.body;
+      await saveConfig(configData);
+      return res.status(200).json({ success: true, message: 'Configurazione salvata' });
+    }
+
+    return res.status(405).json({ error: 'Metodo non supportato' });
+  } catch (error) {
+    console.error('Errore API config:', error);
+    return res.status(500).json({ error: error.message });
+  }
+}
+
+// Export per Vercel
+module.exports = handler;
+
+// Export delle funzioni per uso interno
+module.exports.saveConfig = saveConfig;
+module.exports.loadConfig = loadConfig;
+module.exports.getConfig = getConfig;
+module.exports.getAllConfig = getAllConfig;
+module.exports.updateConfig = updateConfig;
+module.exports.validateConfig = validateConfig;
+module.exports.invalidateCache = invalidateCache;
+module.exports.getConfigWithFallback = getConfigWithFallback;
