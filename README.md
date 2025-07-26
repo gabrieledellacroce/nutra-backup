@@ -41,7 +41,7 @@ FIC_CLIENT_SECRET=your_client_secret
 FIC_COMPANY_ID=your_company_id
 
 # MongoDB (OBBLIGATORIO)
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/nutragenix
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/database
 
 # Base URL (opzionale - auto-rilevato)
 BASE_URL=https://your-app.vercel.app

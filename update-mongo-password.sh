@@ -34,7 +34,7 @@ if [ $? -eq 0 ]; then
     
     # Update Vercel environment variable
     echo "🚀 Updating Vercel environment variable..."
-    NEW_URI="mongodb+srv://gabrieledellacroce:$NEW_PASSWORD@cluster0.spflo8r.mongodb.net/nutra-backup?retryWrites=true&w=majority&appName=Cluster0"
+    NEW_URI="mongodb+srv://USERNAME:$NEW_PASSWORD@cluster0.XXXXX.mongodb.net/DATABASE?retryWrites=true&w=majority&appName=Cluster0"
     
     # Remove old variable
     vercel env rm MONGODB_URI production --yes
