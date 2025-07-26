@@ -105,7 +105,8 @@ async function testPDFDownload() {
         console.log('   Headers:', Object.fromEntries(pdfResponse.headers.entries()));
         
         if (pdfResponse.ok) {
-            const pdfBuffer = await pdfResponse.buffer();
+            const arrayBuffer = await pdfResponse.arrayBuffer();
+    const pdfBuffer = Buffer.from(arrayBuffer);
             console.log('✅ PDF scaricato con successo!');
             console.log('📏 Dimensione PDF:', pdfBuffer.length, 'bytes');
             

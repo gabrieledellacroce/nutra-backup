@@ -9,7 +9,7 @@ async function checkTokenType() {
         await client.connect();
         console.log('🔗 Connesso a MongoDB');
         
-        const db = client.db('nutragenix-fatture');
+        const db = client.db('nutragenix');
         const tokens = await db.collection('tokens').find({}).toArray();
         
         console.log('📋 Tutti i token nel database:');

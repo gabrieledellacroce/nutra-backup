@@ -9,7 +9,7 @@ async function checkConfigTokens() {
         await client.connect();
         console.log('🔗 Connesso a MongoDB');
         
-        const db = client.db('nutragenix-fatture');
+        const db = client.db('nutragenix');
         
         // Controlla la collezione config
         const configs = await db.collection('config').find({}).toArray();

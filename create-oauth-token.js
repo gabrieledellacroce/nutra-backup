@@ -12,7 +12,7 @@ async function createOAuthToken() {
         await client.connect();
         console.log('🔗 Connesso a MongoDB');
         
-        const db = client.db('nutragenix-fatture');
+        const db = client.db('nutragenix');
         
         // Crea il token OAuth2 nella collezione tokens
         const tokenData = {

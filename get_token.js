@@ -4,7 +4,7 @@ async function getToken() {
     const client = new MongoClient(process.env.MONGODB_URI);
     try {
         await client.connect();
-        const db = client.db('nutragenix-fatture');
+        const db = client.db('nutragenix');
         const collection = db.collection('tokens');
         
         const tokenDoc = await collection.findOne({}, { sort: { createdAt: -1 } });

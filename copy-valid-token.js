@@ -24,8 +24,8 @@ async function copyValidToken() {
             expires_at: sourceToken.expires_at
         });
         
-        // Copia il token nel database nutragenix-fatture
-        const targetDb = client.db('nutragenix-fatture');
+        // Copia il token nel database nutragenix
+    const targetDb = client.db('nutragenix');
         
         const tokenData = {
             type: 'oauth2',

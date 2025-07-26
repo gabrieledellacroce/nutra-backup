@@ -258,7 +258,8 @@ async function sendReceiptEmail(receiptData, customerEmail, customerName, access
           console.log('📄 Usando URL costruito da permanent_token:', directUrl);
           const response = await fetch(directUrl);
           if (response.ok) {
-            pdfBuffer = await response.buffer();
+            const arrayBuffer = await response.arrayBuffer();
+            pdfBuffer = Buffer.from(arrayBuffer);
             console.log('✅ PDF scaricato con successo da permanent_token');
             pdfStatus = 'downloaded_permanent_token';
           } else {
