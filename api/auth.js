@@ -135,11 +135,58 @@ async function getValidToken() {
 
 
 
-// Esporta solo le funzioni utility
-module.exports = { 
-  getValidToken,
-  saveToken,
-  loadToken,
-  isTokenValid,
-  refreshToken
-};
+// Handler principale per Vercel API
+async function handler(req, res) {
+  if (req.method === 'GET') {
+    try {
+      const token = await loadToken();
+      const isValid = token ? isTokenValid(token) : false;
+      
+      res.status(200).json({
+        success: true,
+        has_token: !!token,
+        is_valid: isValid,
+        expires_at: token ? new Date(token.expires_at).toISOString() : null,
+        has_refresh_token: !!token?.refresh_token,
+        auth_required: !isValid && !token?.refresh_token,
+        message: isValid 
+          ? 'Token valido' 
+          : token?.refresh_token 
+            ? 'Token scaduto ma refresh disponibile'
+            : 'Autorizzazione richiesta'
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  } else if (req.method === 'POST') {
+    try {
+      const validToken = await getValidToken();
+      res.status(200).json({
+        success: true,
+        message: 'Token valido ottenuto',
+        has_token: true
+      });
+    } catch (error) {
+      res.status(401).json({
+        success: false,
+        error: error.message,
+        auth_required: true
+      });
+    }
+  } else {
+    res.status(405).json({ error: 'Method not allowed' });
+  }
+}
+
+// Export default per Vercel
+module.exports = handler;
+
+// Re-export delle funzioni utility
+module.exports.getValidToken = getValidToken;
+module.exports.saveToken = saveToken;
+module.exports.loadToken = loadToken;
+module.exports.isTokenValid = isTokenValid;
+module.exports.refreshToken = refreshToken;

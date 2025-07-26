@@ -58,10 +58,21 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    // Ottieni token e company ID dalle configurazioni o variabili d'ambiente
-    const accessToken = await getConfigWithFallback('FATTURE_ACCESS_TOKEN') || 
-                       process.env.FATTURE_ACCESS_TOKEN || 
-                       'a/eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJyZWYiOiJJOWFaaU1pR0VXTVNiNWRLQ3lPTVdkbndRZjcwNHlIZyIsImV4cCI6MTc1MzI4NDM2MX0.CjUAB_zVpI0WWSdxIKnZWcFJrRnLSEOAU0rWOtUyi3c';
+    // Ottieni token valido (con refresh automatico se necessario) e company ID
+    const { getValidToken } = require('./auth.js');
+    let accessToken;
+    
+    try {
+      accessToken = await getValidToken();
+      console.log('🔑 Token valido ottenuto dal sistema OAuth2');
+    } catch (error) {
+      console.warn('⚠️ Impossibile ottenere token OAuth2, uso fallback:', error.message);
+      // Fallback al token hardcoded se OAuth2 non funziona
+      accessToken = await getConfigWithFallback('FATTURE_ACCESS_TOKEN') || 
+                   process.env.FATTURE_ACCESS_TOKEN || 
+                   'a/eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJyZWYiOiJJOWFaaU1pR0VXTVNiNWRLQ3lPTVdkbndRZjcwNHlIZyIsImV4cCI6MTc1MzI4NDM2MX0.CjUAB_zVpI0WWSdxIKnZWcFJrRnLSEOAU0rWOtUyi3c';
+    }
+    
     const companyId = await getConfigWithFallback('FATTURE_COMPANY_ID') || 
                      process.env.FIC_COMPANY_ID || 
                      '1268058';

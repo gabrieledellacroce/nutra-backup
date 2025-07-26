@@ -640,58 +640,65 @@ async function handler(req, res) {
       payment_account_used: paymentAccount?.name || null
     });
 
-    // DISABILITATO: Invio automatico email ricevuta
-    // Fatture in Cloud invia un webhook quando la ricevuta è pronta per il download
-    // quindi non è necessario inviare l'email immediatamente
-    let emailResult = { success: false, reason: 'Email disabled - webhook system active' };
-    console.log("📧 Invio email disabilitato - sistema webhook attivo");
+    // ATTIVAZIONE WEBHOOK INTERNO: Chiamiamo direttamente il nostro webhook
+    // invece di aspettare che Fatture in Cloud lo faccia
+    let emailResult = { success: false, reason: 'Webhook interno non chiamato' };
     
-    /*
     try {
-      console.log("📧 Tentativo invio email ricevuta...");
+      console.log("🔔 Attivazione webhook interno per invio email...");
       
-      // Verifica configurazione email
-      const emailConfig = await checkEmailConfiguration();
-      if (emailConfig.configured) {
-        emailResult = await sendReceiptEmail(
-          data.data, 
-          email, 
-          `${first_name} ${last_name}`,
-          accessToken,
-          companyId
-        );
-        
-        if (emailResult.success) {
-          console.log("✅ Email ricevuta inviata con successo:", {
-            to: email,
-            messageId: emailResult.messageId,
-            hasPDF: emailResult.hasPDF
-          });
-        } else {
-          console.warn("⚠️ Errore invio email ricevuta:", emailResult.error);
+      // Simula il payload che Fatture in Cloud invierebbe al webhook
+      const webhookPayload = {
+        type: 'it.fattureincloud.webhooks.issued_documents.receipts.create',
+        data: {
+          entity: data.data
         }
+      };
+      
+      // Chiama il nostro endpoint webhook interno
+      const webhookResponse = await fetch(`${req.headers.origin || 'https://nutra-backup.vercel.app'}/api/ricevutecloud`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'Internal-Webhook-Call'
+        },
+        body: JSON.stringify(webhookPayload)
+      });
+      
+      if (webhookResponse.ok) {
+        const webhookResult = await webhookResponse.json();
+        console.log("✅ Webhook interno chiamato con successo:", webhookResult);
+        emailResult = { 
+          success: webhookResult.success || webhookResult.emailSent || false, 
+          reason: 'Webhook interno attivato',
+          webhookResult: webhookResult
+        };
       } else {
-        console.log("📧 Invio email saltato:", emailConfig.reason);
-        emailResult = { success: false, reason: emailConfig.reason };
+        const errorText = await webhookResponse.text();
+        console.warn("⚠️ Errore chiamata webhook interno:", webhookResponse.status, errorText);
+        emailResult = { 
+          success: false, 
+          error: `Webhook error: ${webhookResponse.status} - ${errorText}` 
+        };
       }
-    } catch (emailError) {
-      console.error("❌ Errore durante invio email:", emailError);
-      emailResult = { success: false, error: emailError.message };
+      
+    } catch (webhookError) {
+      console.error("❌ Errore durante chiamata webhook interno:", webhookError);
+      emailResult = { success: false, error: webhookError.message };
     }
-    */
 
     // Determina il messaggio di stato finale
     let finalStatus, finalMessage;
     
     if (isInstantPayment && paymentAccount) {
       finalStatus = 'automatically_paid';
-      finalMessage = `Ricevuta creata e AUTOMATICAMENTE MARCATA COME PAGATA. Gateway: ${payment_gateway_names?.[0] || 'unknown'}. ✅ PAGAMENTO ELETTRONICO PROCESSATO AUTOMATICAMENTE. 📧 Email sarà inviata tramite webhook quando PDF è pronto`;
+      finalMessage = `Ricevuta creata e AUTOMATICAMENTE MARCATA COME PAGATA. Gateway: ${payment_gateway_names?.[0] || 'unknown'}. ✅ PAGAMENTO ELETTRONICO PROCESSATO AUTOMATICAMENTE. 📧 ${emailResult.success ? 'Email inviata con successo tramite webhook interno' : 'Email non inviata: ' + (emailResult.error || emailResult.reason)}`;
     } else if (isInstantPayment && !paymentAccount) {
       finalStatus = 'manual_payment_required';
-      finalMessage = `Ricevuta creata. Gateway: ${payment_gateway_names?.[0] || 'unknown'}. ⚠️ PAGAMENTO ELETTRONICO RILEVATO ma account di pagamento non disponibile - Marca manualmente come PAGATA. 📧 Email sarà inviata tramite webhook quando PDF è pronto`;
+      finalMessage = `Ricevuta creata. Gateway: ${payment_gateway_names?.[0] || 'unknown'}. ⚠️ PAGAMENTO ELETTRONICO RILEVATO ma account di pagamento non disponibile - Marca manualmente come PAGATA. 📧 ${emailResult.success ? 'Email inviata con successo tramite webhook interno' : 'Email non inviata: ' + (emailResult.error || emailResult.reason)}`;
     } else {
       finalStatus = 'not_paid';
-      finalMessage = `Ricevuta creata come DA SALDARE. Gateway: ${payment_gateway_names?.[0] || 'unknown'}. 📋 Ricevuta in attesa di pagamento. 📧 Email sarà inviata tramite webhook quando PDF è pronto`;
+      finalMessage = `Ricevuta creata come DA SALDARE. Gateway: ${payment_gateway_names?.[0] || 'unknown'}. 📋 Ricevuta in attesa di pagamento. 📧 ${emailResult.success ? 'Email inviata con successo tramite webhook interno' : 'Email non inviata: ' + (emailResult.error || emailResult.reason)}`;
     }
 
     // Tutto ok
