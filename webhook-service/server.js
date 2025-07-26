@@ -18,7 +18,7 @@ async function connectDB() {
   try {
     const client = new MongoClient(MONGODB_URI);
     await client.connect();
-    db = client.db('nutragenix-fatture');
+    db = client.db('nutragenix');
     console.log('✅ Connesso a MongoDB');
   } catch (error) {
     console.error('❌ Errore connessione MongoDB:', error);

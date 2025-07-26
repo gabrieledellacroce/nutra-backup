@@ -1,6 +1,7 @@
 // Endpoint webhook per ricevere notifiche da Fatture in Cloud
 const { sendReceiptEmail, checkEmailConfiguration } = require('./email.js');
 const { getConfigWithFallback } = require('./config.js');
+const { getValidToken } = require('./auth.js');
 
 module.exports = async function handler(req, res) {
   // Accetta solo POST
@@ -47,8 +48,20 @@ module.exports = async function handler(req, res) {
     }
 
     // Verifica se abbiamo i dati del cliente
-    const customerEmail = receipt.entity?.email;
-    const customerName = receipt.entity?.name;
+    // Prima controlla se abbiamo i dati originali del cliente (da chiamata interna)
+    let customerEmail, customerName;
+    
+    if (req.body.original_customer) {
+      // Dati del cliente originale da chiamata interna
+      customerEmail = req.body.original_customer.email;
+      customerName = `${req.body.original_customer.first_name || ''} ${req.body.original_customer.last_name || ''}`.trim();
+      console.log('👤 Utilizzando dati cliente originali:', { email: customerEmail, name: customerName });
+    } else {
+      // Fallback ai dati della ricevuta di Fatture in Cloud
+      customerEmail = receipt.entity?.email;
+      customerName = receipt.entity?.name;
+      console.log('👤 Utilizzando dati cliente da ricevuta FIC:', { email: customerEmail, name: customerName });
+    }
     
     if (!customerEmail) {
       console.log('⚠️ Email cliente non trovata nella ricevuta');
@@ -58,10 +71,8 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    // Ottieni token e company ID dalle configurazioni o variabili d'ambiente
-    const accessToken = await getConfigWithFallback('FATTURE_ACCESS_TOKEN') || 
-                       process.env.FATTURE_ACCESS_TOKEN || 
-                       'a/eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJyZWYiOiJJOWFaaU1pR0VXTVNiNWRLQ3lPTVdkbndRZjcwNHlIZyIsImV4cCI6MTc1MzI4NDM2MX0.CjUAB_zVpI0WWSdxIKnZWcFJrRnLSEOAU0rWOtUyi3c';
+    // Ottieni token e company ID dalle configurazioni
+    const accessToken = await getValidToken();
     const companyId = await getConfigWithFallback('FATTURE_COMPANY_ID') || 
                      process.env.FIC_COMPANY_ID || 
                      '1268058';
@@ -81,8 +92,24 @@ module.exports = async function handler(req, res) {
     try {
       console.log('📧 Tentativo invio email via webhook...');
       
+      // Prepara i dati della ricevuta con URL del PDF se disponibile
+      const receiptDataForEmail = {
+        ...receipt,
+        // Assicurati che l'URL sia pulito (rimuovi spazi extra)
+        url: receipt.url ? receipt.url.trim() : null,
+        // Aggiungi anche il permanent_token come fallback
+        permanent_token: receipt.permanent_token
+      };
+      
+      console.log('📄 Dati PDF per email:', {
+        hasUrl: !!receiptDataForEmail.url,
+        url: receiptDataForEmail.url,
+        hasPermanentToken: !!receiptDataForEmail.permanent_token,
+        permanentToken: receiptDataForEmail.permanent_token
+      });
+      
       const emailResult = await sendReceiptEmail(
-        receipt,
+        receiptDataForEmail,
         customerEmail,
         customerName,
         accessToken,

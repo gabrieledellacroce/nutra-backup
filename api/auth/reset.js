@@ -35,7 +35,7 @@ export default async function handler(req, res) {
         const client = new MongoClient(mongoUri);
         await client.connect();
         
-        const db = client.db('nutragenix-fatture');
+        const db = client.db('nutragenix');
         const collection = db.collection('oauth_tokens');
 
         // Cancella tutti i token esistenti per questa company

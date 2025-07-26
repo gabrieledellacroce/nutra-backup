@@ -110,7 +110,7 @@ async function saveNewToken(tokenData) {
         client = new MongoClient(MONGODB_URI);
         await client.connect();
         
-        const db = client.db('nutra-backup');
+        const db = client.db('nutragenix');
         const collection = db.collection('tokens');
         
         const newTokenData = {

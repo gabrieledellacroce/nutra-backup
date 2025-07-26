@@ -648,10 +648,22 @@ async function handler(req, res) {
       console.log("🔔 Attivazione webhook interno per invio email...");
       
       // Simula il payload che Fatture in Cloud invierebbe al webhook
+      // Includiamo anche i dati originali del cliente per l'invio email
       const webhookPayload = {
         type: 'it.fattureincloud.webhooks.issued_documents.receipts.create',
         data: {
           entity: data.data
+        },
+        // Aggiungiamo i dati originali del cliente per l'email
+        original_customer: {
+          email: email,
+          first_name: first_name,
+          last_name: last_name,
+          phone: phone
+        },
+        shopify_order: {
+          id: shopifyOrderId,
+          order_number: order_number || name
         }
       };
       

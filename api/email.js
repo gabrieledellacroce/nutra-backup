@@ -100,7 +100,8 @@ async function getReceiptPDF(accessToken, companyId, receiptId) {
 
       if (response.ok) {
         console.log(`✅ PDF ricevuta ${receiptId} scaricato con successo al tentativo ${attempt}`);
-        return await response.buffer();
+        const arrayBuffer = await response.arrayBuffer();
+        return Buffer.from(arrayBuffer);
       }
       
       // Se è 404, il PDF potrebbe non essere ancora pronto
@@ -186,8 +187,16 @@ function generateDocumentButton(receiptData, companyId) {
     margin: 20px 0;
   `;
   
-  // URL diretto per scaricare il PDF del documento
-  const documentUrl = `https://compute.fattureincloud.it/doc/${receiptData.token}.pdf`;
+  // Usa l'URL diretto se disponibile, altrimenti costruisci con permanent_token
+  let documentUrl;
+  if (receiptData.url && receiptData.url.trim()) {
+    documentUrl = receiptData.url.trim();
+  } else if (receiptData.permanent_token) {
+    documentUrl = `https://compute.fattureincloud.it/doc/${receiptData.permanent_token}.pdf`;
+  } else {
+    // Fallback per compatibilità
+    documentUrl = `https://compute.fattureincloud.it/doc/${receiptData.token || receiptData.permanent_token}.pdf`;
+  }
   
   return `
     <div style="text-align: center; margin: 20px 0;">
@@ -229,16 +238,48 @@ async function sendReceiptEmail(receiptData, customerEmail, customerName, access
     
     if (attachPdf) {
       try {
-        pdfBuffer = await getReceiptPDF(accessToken, companyId, receiptData.id);
-        console.log('📄 PDF ricevuta scaricato con successo');
-        pdfStatus = 'downloaded';
+        // Se abbiamo un URL diretto nel webhook, usalo
+        if (receiptData.url && receiptData.url.trim()) {
+          console.log('📄 Usando URL diretto del PDF dal webhook:', receiptData.url);
+          const response = await fetch(receiptData.url.trim());
+          if (response.ok) {
+            const arrayBuffer = await response.arrayBuffer();
+            pdfBuffer = Buffer.from(arrayBuffer);
+            console.log('✅ PDF scaricato con successo dall\'URL diretto');
+            pdfStatus = 'downloaded_direct';
+          } else {
+            console.warn(`⚠️ Errore download PDF da URL diretto: ${response.status} ${response.statusText}`);
+            throw new Error(`Errore download PDF da URL diretto: ${response.status} ${response.statusText}`);
+          }
+        } 
+        // Se abbiamo un permanent_token, prova a costruire l'URL
+        else if (receiptData.permanent_token) {
+          const directUrl = `https://compute.fattureincloud.it/doc/${receiptData.permanent_token}.pdf`;
+          console.log('📄 Usando URL costruito da permanent_token:', directUrl);
+          const response = await fetch(directUrl);
+          if (response.ok) {
+            pdfBuffer = await response.buffer();
+            console.log('✅ PDF scaricato con successo da permanent_token');
+            pdfStatus = 'downloaded_permanent_token';
+          } else {
+            console.warn(`⚠️ Errore download PDF da permanent_token: ${response.status} ${response.statusText}`);
+            throw new Error(`Errore download PDF da permanent_token: ${response.status} ${response.statusText}`);
+          }
+        }
+        else {
+          // Fallback al metodo API tradizionale
+          console.log('📄 URL diretto e permanent_token non disponibili, uso API tradizionale');
+          pdfBuffer = await getReceiptPDF(accessToken, companyId, receiptData.id);
+          console.log('📄 PDF ricevuta scaricato con successo via API');
+          pdfStatus = 'downloaded_api';
+        }
       } catch (error) {
         console.warn('⚠️ Impossibile scaricare PDF ricevuta:', error.message);
         pdfStatus = 'failed';
         
         // Se il PDF non è disponibile, invia comunque l'email senza allegato
         // ma includi un messaggio informativo
-        if (error.message.includes('404')) {
+        if (error.message.includes('404') || error.message.includes('non esiste')) {
           console.log('📄 PDF non ancora disponibile - l\'email verrà inviata senza allegato');
           pdfStatus = 'not_ready';
         }

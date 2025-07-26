@@ -18,7 +18,7 @@ async function checkToken() {
     const client = new MongoClient(process.env.MONGODB_URI);
     await client.connect();
     
-    const db = client.db('nutra-backup');
+    const db = client.db('nutragenix');
     const token = await db.collection('tokens').findOne({ type: 'oauth2' });
     
     await client.close();

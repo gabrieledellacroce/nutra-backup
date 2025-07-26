@@ -20,7 +20,7 @@ async function testConnection() {
         console.log('✅ Successfully connected to MongoDB');
         
         // Test database access
-        const db = client.db('nutra-backup');
+        const db = client.db('nutragenix');
         const collections = await db.listCollections().toArray();
         console.log('✅ Database access successful');
         console.log('Collections:', collections.map(c => c.name));

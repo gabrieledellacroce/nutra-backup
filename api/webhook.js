@@ -66,11 +66,11 @@ module.exports = async function handler(req, res) {
       accessToken = await getValidToken();
       console.log('🔑 Token valido ottenuto dal sistema OAuth2');
     } catch (error) {
-      console.warn('⚠️ Impossibile ottenere token OAuth2, uso fallback:', error.message);
-      // Fallback al token hardcoded se OAuth2 non funziona
-      accessToken = await getConfigWithFallback('FATTURE_ACCESS_TOKEN') || 
-                   process.env.FATTURE_ACCESS_TOKEN || 
-                   'a/eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJyZWYiOiJJOWFaaU1pR0VXTVNiNWRLQ3lPTVdkbndRZjcwNHlIZyIsImV4cCI6MTc1MzI4NDM2MX0.CjUAB_zVpI0WWSdxIKnZWcFJrRnLSEOAU0rWOtUyi3c';
+      console.error('❌ Impossibile ottenere token OAuth2:', error.message);
+      return res.status(500).json({ 
+        error: 'Authentication failed', 
+        message: 'Unable to get valid token' 
+      });
     }
     
     const companyId = await getConfigWithFallback('FATTURE_COMPANY_ID') || 
