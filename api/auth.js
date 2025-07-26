@@ -18,7 +18,7 @@ async function saveToken(tokenData) {
     const client = new MongoClient(process.env.MONGODB_URI);
     await client.connect();
     
-    const db = client.db('nutragenix');
+    const db = client.db('nutra-backup');
     const result = await db.collection('tokens').replaceOne(
       { type: 'oauth2' },
       {
@@ -54,7 +54,7 @@ async function loadToken() {
     const client = new MongoClient(process.env.MONGODB_URI);
     await client.connect();
     
-    const db = client.db('nutragenix');
+    const db = client.db('nutra-backup');
     const token = await db.collection('tokens').findOne({ type: 'oauth2' });
     
     await client.close();

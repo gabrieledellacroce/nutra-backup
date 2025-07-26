@@ -4,7 +4,7 @@
 echo "🧪 Test simulazione webhook per invio email..."
 
 # URL dell'API
-API_URL="https://nutragenix-fatture.vercel.app/api/webhook"
+API_URL="https://nutra-backup.vercel.app/api/webhook"
 
 # Genera la data corrente in formato ISO
 CURRENT_DATE=$(date -u +"%Y-%m-%d")

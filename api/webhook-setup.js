@@ -15,7 +15,7 @@ module.exports = async function handler(req, res) {
     }
 
     const baseUrl = `https://api-v2.fattureincloud.it/c/${companyId}/subscriptions`;
-    const webhookUrl = `${req.headers.origin || 'https://nutragenix-fatture.vercel.app'}/api/webhook`;
+    const webhookUrl = `${req.headers.origin || 'https://nutra-backup.vercel.app'}/api/webhook`;
 
     switch (req.method) {
       case 'GET':

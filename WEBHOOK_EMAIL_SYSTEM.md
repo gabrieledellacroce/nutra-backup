@@ -31,7 +31,7 @@ Modificare il sistema per inviare **una sola email al cliente contenente il PDF 
 
 ### URL Webhook
 ```
-https://nutragenix-fatture-qlzulkde3-gabrieledellacroce-2606s-projects.vercel.app/api/webhook
+https://nutra-backup.vercel.app/api/webhook
 ```
 
 ### Eventi Monitorati
@@ -44,7 +44,7 @@ https://nutragenix-fatture-qlzulkde3-gabrieledellacroce-2606s-projects.vercel.ap
 3. Seleziona la tua applicazione
 4. Vai nella sezione "Webhook"
 5. Aggiungi nuovo webhook con:
-   - **URL**: `https://nutragenix-fatture-qlzulkde3-gabrieledellacroce-2606s-projects.vercel.app/api/webhook`
+   - **URL**: `https://nutra-backup.vercel.app/api/webhook`
    - **Eventi**: `receipts.create`, `receipts.update`
 
 ### Registrazione via API
@@ -54,7 +54,7 @@ curl -X POST "https://api-v2.fattureincloud.it/c/COMPANY_ID/subscriptions" \
   -H "Content-Type: application/json" \
   -d '{
     "data": {
-      "sink": "https://nutragenix-fatture-qlzulkde3-gabrieledellacroce-2606s-projects.vercel.app/api/webhook",
+      "sink": "https://nutra-backup.vercel.app/api/webhook",
       "verified": false,
       "types": [
         "it.fattureincloud.webhooks.receipts.create",

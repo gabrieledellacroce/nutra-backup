@@ -47,7 +47,7 @@
 
 ```bash
 # Test webhook
-curl -X POST "https://nutragenix-fatture.vercel.app/api/receipts" \
+curl -X POST "https://nutra-backup.vercel.app/api/receipts" \
   -H "Content-Type: application/json" \
   -H "X-Shopify-Topic: orders/paid" \
   -H "X-Shopify-Shop-Domain: nutragenix.myshopify.com" \
@@ -58,7 +58,7 @@ curl -X POST "https://nutragenix-fatture.vercel.app/api/receipts" \
 vercel --prod
 
 # Logs
-vercel logs https://nutragenix-fatture.vercel.app
+vercel logs https://nutra-backup.vercel.app
 ```
 
 ---

@@ -1,6 +1,6 @@
 {
   "id": "SUB2051",
-  "sink": "https://nutragenix-fatture-g6cq2h27e-gabrieledellacroce-2606s-projects.vercel.app/api/webhook",
+  "sink": "https://nutra-backup.vercel.app/api/webhook",
   "types": [
     "receipts.create",
     "receipts.update"
@@ -9,7 +9,7 @@
   "response": {
     "data": {
       "id": "SUB2051",
-      "sink": "https://nutragenix-fatture-g6cq2h27e-gabrieledellacroce-2606s-projects.vercel.app/api/webhook",
+      "sink": "https://nutra-backup.vercel.app/api/webhook",
       "verified": false,
       "types": [],
       "config": {

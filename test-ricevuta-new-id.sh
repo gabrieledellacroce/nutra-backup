@@ -4,7 +4,7 @@ echo "🚀 TEST NUOVO ID - Ricevuta su Vercel"
 echo "====================================="
 
 # URL del deployment Vercel
-VERCEL_URL="https://nutragenix-fatture.vercel.app"
+VERCEL_URL="https://nutra-backup.vercel.app"
 
 # Genera un ID univoco basato sul timestamp
 UNIQUE_ID=$(date +%s)$((RANDOM % 9999 + 1000))

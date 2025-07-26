@@ -20,7 +20,7 @@ const REAL_TOKENS = {
 
 const MONGODB_URI = process.env.MONGODB_URI;
 const COMPANY_ID = process.env.FIC_COMPANY_ID;
-const BASE_URL = process.env.BASE_URL || 'https://nutragenix-fatture-p0c1lgody-gabrieledellacroce-2606s-projects.vercel.app';
+const BASE_URL = process.env.BASE_URL || 'https://nutra-backup.vercel.app';
 
 if (!MONGODB_URI || !COMPANY_ID || !BASE_URL) {
     console.error('❌ Errore: Variabili d\'ambiente mancanti in .env.prod');

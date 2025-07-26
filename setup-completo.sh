@@ -162,7 +162,7 @@ else
     echo "2. Accedi al tuo account"
     echo "3. Vai in 'Le mie app' > 'Nutragenix Fatture'"
     echo "4. Nella sezione 'Webhook' aggiungi:"
-    echo "   URL: https://nutragenix-fatture-qlzulkde3-gabrieledellacroce-2606s-projects.vercel.app/api/webhook"
+    echo "   URL: https://nutra-backup.vercel.app/api/webhook"
     echo "   Eventi: receipts.create, receipts.update"
 fi
 

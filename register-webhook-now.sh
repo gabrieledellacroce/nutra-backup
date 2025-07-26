@@ -9,11 +9,11 @@ FIC_CLIENT_SECRET="bEhVUmJHWHVZbVJoYkdGamNtOWpaUzVwZEE9PQ=="
 FIC_COMPANY_ID="1268058"
 
 # IMPORTANTE: Inserisci qui un token OAuth2 valido
-# Puoi ottenerlo da: https://nutragenix-fatture-qjnb5ou0n-gabrieledellacroce-2606s-projects.vercel.app/api/auth
+# Puoi ottenerlo da: https://nutra-backup.vercel.app/api/auth
 ACCESS_TOKEN="YOUR_VALID_TOKEN_HERE"
 
 # URL del webhook (aggiornato dopo il deploy su Vercel)
-WEBHOOK_URL="https://nutragenix-fatture-qjnb5ou0n-gabrieledellacroce-2606s-projects.vercel.app/api/webhook"
+WEBHOOK_URL="https://nutra-backup.vercel.app/api/webhook"
 
 echo "🚀 Registrando webhook per le ricevute..."
 echo "🎯 URL: $WEBHOOK_URL"
@@ -23,7 +23,7 @@ echo ""
 # Verifica che il token sia stato inserito
 if [ "$ACCESS_TOKEN" = "YOUR_VALID_TOKEN_HERE" ]; then
     echo "❌ ERRORE: Devi inserire un token OAuth2 valido!"
-    echo "📋 Vai su: https://nutragenix-fatture-qjnb5ou0n-gabrieledellacroce-2606s-projects.vercel.app/api/auth"
+    echo "📋 Vai su: https://nutra-backup.vercel.app/api/auth"
     echo "🔑 Copia il token e sostituisci YOUR_VALID_TOKEN_HERE nello script"
     exit 1
 fi
@@ -67,6 +67,6 @@ else
     if [ $http_code -eq 401 ]; then
         echo ""
         echo "🔑 Il token è scaduto o non valido!"
-        echo "📋 Ottieni un nuovo token da: https://nutragenix-fatture-qjnb5ou0n-gabrieledellacroce-2606s-projects.vercel.app/api/auth"
+        echo "📋 Ottieni un nuovo token da: https://nutra-backup.vercel.app/api/auth"
     fi
 fi

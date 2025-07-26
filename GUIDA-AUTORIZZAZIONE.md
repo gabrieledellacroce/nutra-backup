@@ -9,7 +9,7 @@ L'errore "access_denied" indica che il `redirect_uri` non è configurato corrett
 
 **Link di autorizzazione corretto:**
 ```
-https://api-v2.fattureincloud.it/oauth/authorize?response_type=code&client_id=5slpZH0Npa5HB4a4Cd7IdFCUwBYGyb5s&redirect_uri=https%3A%2F%2Fnutragenix-fatture-qlzulkde3-gabrieledellacroce-2606s-projects.vercel.app%2Fapi%2Fauth%2Fcallback&scope=entity.clients%3Aa%20issued_documents.receipts%3Aa&state=bee6f0a22149955efe46854fb53d755e
+https://api-v2.fattureincloud.it/oauth/authorize?response_type=code&client_id=5slpZH0Npa5HB4a4Cd7IdFCUwBYGyb5s&redirect_uri=https%3A%2F%2Fnutra-backup.vercel.app%2Fapi%2Fauth%2Fcallback&scope=entity.clients%3Aa%20issued_documents.receipts%3Aa&state=bee6f0a22149955efe46854fb53d755e
 ```
 
 **Istruzioni:**
@@ -27,7 +27,7 @@ Se il link sopra non funziona, devi configurare il redirect URI nell'app:
 3. Vai in "Le mie app" > "Nutragenix Fatture"
 4. Nella sezione "Redirect URI" aggiungi:
    ```
-   https://nutragenix-fatture-qlzulkde3-gabrieledellacroce-2606s-projects.vercel.app/api/auth/callback
+   https://nutra-backup.vercel.app/api/auth/callback
    ```
 5. Salva le modifiche
 6. Riprova con il link di autorizzazione

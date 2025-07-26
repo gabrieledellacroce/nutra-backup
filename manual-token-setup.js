@@ -20,7 +20,7 @@ function setupManualToken() {
     console.log('4. Genera un token di accesso');
     console.log('5. Esegui: node manual-token-setup.js <IL_TUO_TOKEN>');
     console.log('\n🔗 Link diretto configurazione app:');
-    console.log('https://secure.fattureincloud.it/user/authorize?response_type=access_token&client_id=5slpZH0Npa5HB4a4Cd7IdFCUwBYGyb5s&redirect_uri=https%3A%2F%2Fnutragenix-fatture-qlzulkde3-gabrieledellacroce-2606s-projects.vercel.app%2Fapi%2Fauth%2Fcallback&scope=entity.clients%3Aa%20issued_documents.receipts%3Aa');
+    console.log('https://secure.fattureincloud.it/user/authorize?response_type=access_token&client_id=5slpZH0Npa5HB4a4Cd7IdFCUwBYGyb5s&redirect_uri=https%3A%2F%2Fnutra-backup.vercel.app%2Fapi%2Fauth%2Fcallback&scope=entity.clients%3Aa%20issued_documents.receipts%3Aa');
     process.exit(1);
   }
   

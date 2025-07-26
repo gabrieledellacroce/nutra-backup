@@ -4,7 +4,7 @@
 echo "🧪 Invio ricevuta di test..."
 
 # URL dell'API (prova con il dominio principale)
-API_URL="https://nutragenix-fatture.vercel.app/api/receipts"
+API_URL="https://nutra-backup.vercel.app/api/receipts"
 
 # Genera la data corrente in formato ISO
 CURRENT_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")

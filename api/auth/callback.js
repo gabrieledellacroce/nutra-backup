@@ -156,7 +156,21 @@ module.exports = async function handler(req, res) {
     }
     
     const tokenData = await response.json();
+    console.log('Token ricevuto da Fatture in Cloud:', {
+      access_token: tokenData.access_token ? 'presente' : 'mancante',
+      refresh_token: tokenData.refresh_token ? 'presente' : 'mancante',
+      expires_in: tokenData.expires_in,
+      token_type: tokenData.token_type
+    });
+    
     const tokenSaved = await saveToken(tokenData);
+    console.log('Risultato salvataggio token:', tokenSaved);
+    
+    if (!tokenSaved) {
+      console.error('ERRORE: Token non salvato correttamente!');
+      const errorHtml = createErrorPage('Errore Salvataggio', 'Il token è stato ricevuto ma non è stato possibile salvarlo nel database. Controlla la configurazione MongoDB.');
+      return res.status(500).setHeader('Content-Type', 'text/html').send(errorHtml);
+    }
     
     // Restituisce una pagina HTML user-friendly invece di JSON
     const successHtml = `

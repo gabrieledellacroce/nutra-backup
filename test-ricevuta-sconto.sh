@@ -4,7 +4,7 @@ echo "🚀 TEST RICEVUTA CON SCONTO - Vercel"
 echo "==================================="
 
 # URL del tuo deployment Vercel
-VERCEL_URL="https://nutragenix-fatture-qlzulkde3-gabrieledellacroce-2606s-projects.vercel.app"
+VERCEL_URL="https://nutra-backup.vercel.app"
 
 # Genera la data corrente in formato ISO
 CURRENT_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")

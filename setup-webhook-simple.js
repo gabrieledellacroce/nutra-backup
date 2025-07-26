@@ -6,7 +6,7 @@ const path = require('path');
 require('dotenv').config({ path: '.env.prod' });
 
 const API_BASE = 'https://api-v2.fattureincloud.it';
-const WEBHOOK_URL = process.env.WEBHOOK_URL || 'https://nutragenix-fatture-qlzulkde3-gabrieledellacroce-2606s-projects.vercel.app/api/webhook';
+const WEBHOOK_URL = process.env.WEBHOOK_URL || 'https://nutra-backup.vercel.app/api/webhook';
 const CLIENT_ID = process.env.FIC_CLIENT_ID;
 const CLIENT_SECRET = process.env.FIC_CLIENT_SECRET;
 const COMPANY_ID = process.env.FIC_COMPANY_ID;

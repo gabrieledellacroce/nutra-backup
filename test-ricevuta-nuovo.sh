@@ -4,7 +4,7 @@
 echo "🧪 Test ricevuta con nuovo ID ordine..."
 
 # URL dell'API
-API_URL="https://nutragenix-fatture.vercel.app/api/receipts"
+API_URL="https://nutra-backup.vercel.app/api/receipts"
 
 # Genera un ID ordine unico basato sul timestamp con millisecondi
 TIMESTAMP=$(date +%s)

@@ -10,7 +10,7 @@ require('dotenv').config({ path: '.env.prod' });
 // Token OAuth2 reali
 const ACCESS_TOKEN = 'a/eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJyZWYiOiJJOWFaaU1pR0VXTVNiNWRLQ3lPTVdkbndRZjcwNHlIZyIsImV4cCI6MTc1MzI4NDM2MX0.CjUAB_zVpI0WWSdxIKnZWcFJrRnLSEOAU0rWOtUyi3c';
 const COMPANY_ID = process.env.FIC_COMPANY_ID;
-const NEW_URL = 'https://nutragenix-fatture-g6cq2h27e-gabrieledellacroce-2606s-projects.vercel.app/api/webhook';
+const NEW_URL = 'https://nutra-backup.vercel.app/api/webhook';
 const WEBHOOK_ID = 'SUB2048';
 
 /**
@@ -160,7 +160,7 @@ async function testWebhook() {
     };
     
     const options = {
-        hostname: 'nutragenix-fatture-p0c1lgody-gabrieledellacroce-2606s-projects.vercel.app',
+        hostname: 'nutra-backup.vercel.app',
         path: '/api/webhook',
         method: 'POST',
         headers: {

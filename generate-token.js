@@ -68,7 +68,7 @@ function saveTokenToEnv(token) {
 function generateAuthUrl() {
     const state = Math.random().toString(36).substring(2, 15);
     // Usa il dominio Vercel per l'autorizzazione in produzione
-    const redirectUri = 'https://nutragenix-fatture.vercel.app/api/auth/callback';
+    const redirectUri = 'https://nutra-backup.vercel.app/api/auth/callback';
     
     const params = new URLSearchParams({
         response_type: 'code',

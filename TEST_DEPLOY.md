@@ -7,7 +7,7 @@ Dopo ogni deploy su Vercel, **SEMPRE** eseguire questo test per verificare il co
 ## 🚀 Comando Test Ricevuta
 
 ```bash
-curl -X POST https://nutragenix-fatture.vercel.app/api/receipts \
+curl -X POST https://nutra-backup.vercel.app/api/receipts \
   -H "Content-Type: application/json" \
   -d '{
     "customer": {
@@ -55,10 +55,10 @@ curl -X POST https://nutragenix-fatture.vercel.app/api/receipts \
 ### 403 - NO_PERMISSION
 ```bash
 # Reset autorizzazione
-curl https://nutragenix-fatture.vercel.app/api/auth/reset
+curl https://nutra-backup.vercel.app/api/auth/reset
 
 # Nuova autorizzazione
-curl https://nutragenix-fatture.vercel.app/api/auth/start
+curl https://nutra-backup.vercel.app/api/auth/start
 # Copia URL e autorizza nel browser
 ```
 
@@ -70,13 +70,13 @@ curl https://nutragenix-fatture.vercel.app/api/auth/start
 
 ```bash
 # Test con output verbose
-curl -X POST https://nutragenix-fatture.vercel.app/api/receipts \
+curl -X POST https://nutra-backup.vercel.app/api/receipts \
   -H "Content-Type: application/json" \
   -d @test-order-simple.json \
   -v
 
 # Verifica stato token
-curl https://nutragenix-fatture.vercel.app/api/auth/status
+curl https://nutra-backup.vercel.app/api/auth/status
 ```
 
 ## 📝 Checklist Post-Deploy

@@ -4,7 +4,7 @@ echo "🔧 TEST CORREZIONE DUPLICATI E IMPORTI"
 echo "======================================"
 
 # URL del tuo deployment Vercel
-VERCEL_URL="https://nutragenix-fatture.vercel.app"
+VERCEL_URL="https://nutra-backup.vercel.app"
 
 echo "📤 Test 1: Ordine con importi corretti..."
 

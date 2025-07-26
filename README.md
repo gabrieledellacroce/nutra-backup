@@ -77,14 +77,14 @@ Per abilitare l'invio automatico delle ricevute via email:
 
 1. Vai su [Fatture in Cloud Developer](https://developers.fattureincloud.it/)
 2. Crea una nuova applicazione
-3. Imposta il Redirect URI: `https://nutragenix-fatture.vercel.app/api/auth/callback`
+3. Imposta il Redirect URI: `https://nutra-backup.vercel.app/api/auth/callback`
 4. Scope richiesti: `entity.clients:a receipts:a`
 
 ## Test del flusso OAuth2
 
 1. **Ottieni l'URL di autorizzazione:**
    ```bash
-   curl -s https://nutragenix-fatture.vercel.app/api/auth/start | jq
+   curl -s https://nutra-backup.vercel.app/api/auth/start | jq
    ```
 
 2. **Autorizza l'applicazione:**
@@ -95,7 +95,7 @@ Per abilitare l'invio automatico delle ricevute via email:
 
 3. **Verifica lo stato del token:**
    ```bash
-   curl -s https://nutragenix-fatture.vercel.app/api/auth/status | jq
+   curl -s https://nutra-backup.vercel.app/api/auth/status | jq
    ```
 
 ## API Endpoints
@@ -298,7 +298,7 @@ Per ricevere automaticamente gli ordini da Shopify:
 
 1. Vai nelle impostazioni del tuo store Shopify
 2. Aggiungi un webhook per "Order created"
-3. URL: `https://nutragenix-fatture.vercel.app/api/receipts`
+3. URL: `https://nutra-backup.vercel.app/api/receipts`
 4. Formato: JSON
 
 ## Troubleshooting

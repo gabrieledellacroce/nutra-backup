@@ -6,7 +6,7 @@ Il sistema di webhook per Fatture in Cloud è stato **completamente configurato 
 
 ### 🔗 DETTAGLI WEBHOOK ATTIVO
 - **ID Subscription**: `SUB2051`
-- **URL Produzione**: `https://nutragenix-fatture-g6cq2h27e-gabrieledellacroce-2606s-projects.vercel.app/api/webhook`
+- **URL Produzione**: `https://nutra-backup.vercel.app/api/webhook`
 - **Eventi Monitorati**: 
   - `receipts.create` (Nuove ricevute)
   - `receipts.update` (Ricevute aggiornate)
@@ -65,7 +65,7 @@ node crea-webhook-finale.js
 ### Test Manuale Webhook
 Per testare manualmente il webhook:
 ```bash
-curl -X POST https://nutragenix-fatture-g6cq2h27e-gabrieledellacroce-2606s-projects.vercel.app/api/webhook \
+curl -X POST https://nutra-backup.vercel.app/api/webhook \
   -H "Content-Type: application/json" \
   -H "User-Agent: FattureInCloud-Webhook/1.0" \
   -d '{

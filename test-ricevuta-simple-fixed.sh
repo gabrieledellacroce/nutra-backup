@@ -4,7 +4,7 @@
 echo "🧪 Test ricevuta con numero fisso alto..."
 
 # URL dell'API
-API_URL="https://nutragenix-fatture.vercel.app/api/receipts"
+API_URL="https://nutra-backup.vercel.app/api/receipts"
 
 # Genera un ID ordine unico
 RANDOM_ID=$(openssl rand -hex 8)

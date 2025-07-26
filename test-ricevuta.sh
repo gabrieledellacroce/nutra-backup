@@ -4,7 +4,7 @@ echo "🚀 TEST SEMPLICE - Ricevuta su Vercel"
 echo "====================================="
 
 # URL del tuo deployment Vercel
-VERCEL_URL="https://nutragenix-fatture.vercel.app"
+VERCEL_URL="https://nutra-backup.vercel.app"
 
 echo "📤 Invio ordine di test a Vercel..."
 

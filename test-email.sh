@@ -4,7 +4,7 @@ echo "📧 TEST EMAIL - Invio email di test"
 echo "=================================="
 
 # URL del tuo deployment Vercel
-VERCEL_URL="https://nutragenix-fatture.vercel.app"
+VERCEL_URL="https://nutra-backup.vercel.app"
 
 echo "📤 Invio email di test a gabriprb@me.com..."
 

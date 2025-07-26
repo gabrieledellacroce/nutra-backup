@@ -56,7 +56,7 @@ Se tutto va bene vedrai:
 ✅ Token valido - API risponde correttamente
 ✅ Webhook registrato con successo!
 🆔 ID Webhook: 12345
-📍 URL: https://nutragenix-fatture-qlzulkde3-gabrieledellacroce-2606s-projects.vercel.app/api/webhook
+📍 URL: https://nutra-backup.vercel.app/api/webhook
 ```
 
 ## 🧪 Test Finale

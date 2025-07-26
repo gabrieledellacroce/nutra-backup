@@ -5,7 +5,7 @@ echo "🧪 Test completo sistema ricevute con email..."
 echo "================================================"
 
 # URL dell'API
-API_URL="https://nutragenix-fatture.vercel.app/api/receipts"
+API_URL="https://nutra-backup.vercel.app/api/receipts"
 
 # Genera un ID univoco per il test
 TEST_ID=$(date +%s)

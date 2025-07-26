@@ -2,7 +2,7 @@
 
 # Script per testare la configurazione del webhook di Fatture in Cloud
 
-BASE_URL="https://nutragenix-fatture-qlzulkde3-gabrieledellacroce-2606s-projects.vercel.app"
+BASE_URL="https://nutra-backup.vercel.app"
 
 echo "🔧 Test configurazione webhook Fatture in Cloud"
 echo "================================================"

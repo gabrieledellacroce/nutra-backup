@@ -37,7 +37,7 @@
 
 ### 🔗 WEBHOOK ATTIVO
 - **ID Subscription**: SUB2051
-- **URL**: https://nutragenix-fatture-g6cq2h27e-gabrieledellacroce-2606s-projects.vercel.app/api/webhook
+- **URL**: https://nutra-backup.vercel.app/api/webhook
 - **Eventi**: receipts.create, receipts.update
 - **Stato**: ✅ Registrato e operativo
 
@@ -74,7 +74,7 @@ node setup-token-reali.js
 
 ## 🎯 URL Webhook Configurato
 
-**Endpoint**: `https://nutragenix-fatture-qlzulkde3-gabrieledellacroce-2606s-projects.vercel.app/api/webhook`
+**Endpoint**: `https://nutra-backup.vercel.app/api/webhook`
 
 **Eventi monitorati**:
 - `receipts.create`

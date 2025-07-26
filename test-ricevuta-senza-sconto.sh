@@ -3,7 +3,7 @@
 # Test ricevuta senza sconto
 echo "🧪 Test ricevuta SENZA sconto..."
 
-curl -X POST https://nutragenix-fatture.vercel.app/api/receipts \
+curl -X POST https://nutra-backup.vercel.app/api/receipts \
   -H "Content-Type: application/json" \
   -d '{
     "id": 999999999,

@@ -35,7 +35,7 @@ fi
 
 echo "✅ Variabili d'ambiente caricate correttamente"
 echo "📍 Company ID: $FIC_COMPANY_ID"
-echo "🔗 Webhook URL: ${WEBHOOK_URL:-'https://nutragenix-fatture-qlzulkde3-gabrieledellacroce-2606s-projects.vercel.app/api/webhook'}"
+echo "🔗 Webhook URL: ${WEBHOOK_URL:-'https://nutra-backup.vercel.app/api/webhook'}"
 
 # Esegue lo script Node.js
 echo "\n🚀 Avvio configurazione webhook..."

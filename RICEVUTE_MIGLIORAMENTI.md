@@ -94,5 +94,5 @@ Per testare le modifiche:
 ### Deploy
 
 Le modifiche sono state deployate su:
-- **Produzione**: https://nutragenix-fatture-jteinma5n-gabrieledellacroce-2606s-projects.vercel.app
+- **Produzione**: https://nutra-backup.vercel.app
 - **Commit**: `95cc236` - "Aggiungi dati mancanti nelle ricevute"
