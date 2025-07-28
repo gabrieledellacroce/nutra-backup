@@ -190,59 +190,67 @@ async function checkExistingReceipt(accessToken, companyId, shopifyOrderId, orde
       companyId
     });
 
-    // Cerca ricevute con l'ID ordine Shopify nelle note
-    const searchUrl = `https://api-v2.fattureincloud.it/c/${companyId}/issued_documents?type=receipt&q=${shopifyOrderId}&per_page=10`;
+    // Invece di usare la ricerca con 'q', prendiamo le ricevute recenti e le filtriamo
+    // Questo evita problemi con l'encoding della query
+    const searchUrl = `https://api-v2.fattureincloud.it/c/${companyId}/issued_documents?type=receipt&fields=id,number,date,amount_gross,entity.notes&per_page=50&sort=-date`;
     
-    console.log(`🌐 [${checkId}] Chiamata API ricerca ricevute:`, {
+    console.log(`🌐 [${checkId}] Chiamata API ricerca ricevute (senza query):`, {
       url: searchUrl,
-      searchTerm: shopifyOrderId
+      method: 'GET recent receipts'
     });
 
-    const response = await fetch(
-      searchUrl,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`
-        }
+    const response = await fetch(searchUrl, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`
       }
-    );
-    
-    if (response.ok) {
-      const data = await response.json();
-      console.log(`📊 [${checkId}] Risultati ricerca:`, {
-        totalFound: data.data?.length || 0,
-        currentPage: data.current_page,
-        totalPages: data.last_page
-      });
+    });
 
-      const existingReceipts = data.data?.filter(receipt => 
-        receipt.notes?.includes(`Shopify-ID:${shopifyOrderId}`) ||
-        receipt.notes?.includes(`Ordine: ${orderNumber}`)
-      ) || [];
-      
-      if (existingReceipts.length > 0) {
-        console.log(`✅ [${checkId}] DUPLICATO TROVATO! Ricevuta esistente per ordine ${shopifyOrderId}:`, {
-          receipt_id: existingReceipts[0].id,
-          number: existingReceipts[0].number,
-          amount: existingReceipts[0].amount_gross,
-          notes: existingReceipts[0].notes
-        });
-        return existingReceipts[0];
-      } else {
-        console.log(`🔍 [${checkId}] Nessun duplicato trovato tra le ${data.data?.length || 0} ricevute esaminate`);
-      }
-    } else {
+    if (!response.ok) {
       console.error(`❌ [${checkId}] Errore API ricerca ricevute:`, {
         status: response.status,
         statusText: response.statusText
       });
+      return null;
     }
-    
+
+    const data = await response.json();
+    console.log(`📊 [${checkId}] Risultati ricerca:`, {
+      totalFound: data.data?.length || 0,
+      currentPage: data.current_page,
+      totalPages: data.last_page
+    });
+
+    if (data.data && data.data.length > 0) {
+      // Controlla ogni ricevuta trovata
+      for (const receipt of data.data) {
+        console.log(`🔎 [${checkId}] Controllo ricevuta ${receipt.id}:`, {
+          number: receipt.number,
+          date: receipt.date,
+          amount: receipt.amount_gross,
+          notes: receipt.entity?.notes || 'N/A'
+        });
+
+        // Verifica se le note contengono l'ID ordine Shopify
+        const notes = receipt.entity?.notes || '';
+        if (notes.includes(`Shopify-ID:${shopifyOrderId}`) || 
+            notes.includes(`Ordine: ${orderNumber}`) ||
+            notes.includes(shopifyOrderId.toString())) {
+          
+          console.log(`✅ [${checkId}] DUPLICATO TROVATO! Ricevuta ${receipt.id} contiene riferimento all'ordine ${shopifyOrderId}`);
+          return receipt;
+        }
+      }
+      
+      console.log(`🔍 [${checkId}] Nessun duplicato trovato tra le ${data.data.length} ricevute esaminate`);
+    } else {
+      console.log(`📭 [${checkId}] Nessuna ricevuta trovata`);
+    }
+
     return null;
   } catch (error) {
-    console.error(`❌ [${checkId}] Errore controllo ricevuta esistente:`, {
+    console.error(`❌ [${checkId}] Errore durante controllo duplicati:`, {
       error: error.message,
       shopifyOrderId,
       orderNumber
