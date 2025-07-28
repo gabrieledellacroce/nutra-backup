@@ -181,10 +181,25 @@ async function getNextReceiptNumber(accessToken, companyId, retryCount = 0) {
 
 // Funzione per verificare se una ricevuta esiste già per questo ordine
 async function checkExistingReceipt(accessToken, companyId, shopifyOrderId, orderNumber) {
+  const checkId = `CHK_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+  
   try {
+    console.log(`🔍 [${checkId}] Inizio controllo duplicati:`, {
+      shopifyOrderId,
+      orderNumber,
+      companyId
+    });
+
     // Cerca ricevute con l'ID ordine Shopify nelle note
+    const searchUrl = `https://api-v2.fattureincloud.it/c/${companyId}/issued_documents?type=receipt&q=${shopifyOrderId}&per_page=10`;
+    
+    console.log(`🌐 [${checkId}] Chiamata API ricerca ricevute:`, {
+      url: searchUrl,
+      searchTerm: shopifyOrderId
+    });
+
     const response = await fetch(
-      `https://api-v2.fattureincloud.it/c/${companyId}/issued_documents?type=receipt&q=${shopifyOrderId}&per_page=10`,
+      searchUrl,
       {
         method: "GET",
         headers: {
@@ -196,24 +211,42 @@ async function checkExistingReceipt(accessToken, companyId, shopifyOrderId, orde
     
     if (response.ok) {
       const data = await response.json();
+      console.log(`📊 [${checkId}] Risultati ricerca:`, {
+        totalFound: data.data?.length || 0,
+        currentPage: data.current_page,
+        totalPages: data.last_page
+      });
+
       const existingReceipts = data.data?.filter(receipt => 
         receipt.notes?.includes(`Shopify-ID:${shopifyOrderId}`) ||
         receipt.notes?.includes(`Ordine: ${orderNumber}`)
       ) || [];
       
       if (existingReceipts.length > 0) {
-        console.log(`🔍 Ricevuta esistente trovata per ordine ${shopifyOrderId}:`, {
+        console.log(`✅ [${checkId}] DUPLICATO TROVATO! Ricevuta esistente per ordine ${shopifyOrderId}:`, {
           receipt_id: existingReceipts[0].id,
           number: existingReceipts[0].number,
-          amount: existingReceipts[0].amount_gross
+          amount: existingReceipts[0].amount_gross,
+          notes: existingReceipts[0].notes
         });
         return existingReceipts[0];
+      } else {
+        console.log(`🔍 [${checkId}] Nessun duplicato trovato tra le ${data.data?.length || 0} ricevute esaminate`);
       }
+    } else {
+      console.error(`❌ [${checkId}] Errore API ricerca ricevute:`, {
+        status: response.status,
+        statusText: response.statusText
+      });
     }
     
     return null;
   } catch (error) {
-    console.error("Errore controllo ricevuta esistente:", error);
+    console.error(`❌ [${checkId}] Errore controllo ricevuta esistente:`, {
+      error: error.message,
+      shopifyOrderId,
+      orderNumber
+    });
     return null;
   }
 }
@@ -226,30 +259,66 @@ async function handler(req, res) {
     return res.status(405).json({ error: "Method Not Allowed" });
   }
 
+  const requestId = `REQ_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  
   try {
+    console.log(`🆔 [${requestId}] ==================== INIZIO ELABORAZIONE RICEVUTA ====================`);
+    
     // Validazione dati in ingresso
     if (!req.body || !req.body.customer || !req.body.line_items) {
+      console.log(`❌ [${requestId}] Dati ordine Shopify mancanti`);
       return res.status(400).json({ 
         error: "Dati ordine Shopify mancanti", 
-        required: ["customer", "line_items", "total_price"] 
+        required: ["customer", "line_items", "total_price"],
+        requestId
       });
     }
 
     // Estrai i dati dall'ordine Shopify
     const { id: shopifyOrderId, customer, billing_address, line_items, total_price, subtotal_price, total_discounts, discount_codes, discount_applications, currency, created_at, payment_gateway_names, financial_status, order_number, name, phone } = req.body;
     
+    console.log(`🧾 [${requestId}] Richiesta creazione ricevuta:`, {
+      shopifyOrderId,
+      name,
+      order_number,
+      email: customer?.email,
+      customer: `${customer?.first_name} ${customer?.last_name}`,
+      total_price,
+      payment_gateway: payment_gateway_names?.[0] || 'unknown',
+      financial_status,
+      timestamp: new Date().toISOString(),
+      user_agent: req.headers['user-agent'],
+      origin: req.headers.origin,
+      referer: req.headers.referer
+    });
+
+    // Log stato attuale della mappa di elaborazione
+    console.log(`📊 [${requestId}] Stato processingOrders:`, {
+      size: processingOrders.size,
+      orders: Array.from(processingOrders.entries()).map(([id, timestamp]) => ({
+        orderId: id,
+        startTime: new Date(timestamp).toISOString(),
+        duration: Date.now() - timestamp.getTime()
+      }))
+    });
+    
     // Verifica se l'ordine è già in elaborazione
     if (processingOrders.has(shopifyOrderId)) {
-      console.log(`⚠️ ORDINE ${shopifyOrderId} GIÀ IN ELABORAZIONE - Richiesta ignorata`);
+      const startTime = processingOrders.get(shopifyOrderId);
+      const duration = Date.now() - startTime.getTime();
+      console.log(`⚠️ [${requestId}] ORDINE ${shopifyOrderId} GIÀ IN ELABORAZIONE da ${duration}ms - Richiesta ignorata`);
       return res.status(429).json({
         success: false,
         error: "Ordine già in elaborazione",
-        message: "Una richiesta per questo ordine è già in corso di elaborazione"
+        message: "Una richiesta per questo ordine è già in corso di elaborazione",
+        requestId,
+        duration_ms: duration
       });
     }
     
     // Segna l'ordine come in elaborazione
     processingOrders.set(shopifyOrderId, new Date());
+    console.log(`🔄 [${requestId}] Ordine ${shopifyOrderId} aggiunto alla coda di elaborazione`);
     
     // Log delle informazioni di pagamento per debug
     console.log("💳 Informazioni pagamento Shopify:", {
@@ -272,18 +341,35 @@ async function handler(req, res) {
     // Determina il telefono del cliente (priorità: customer.phone, billing_address.phone, phone dell'ordine)
     const customerPhone = customer_phone || (billing_address && billing_address.phone) || phone || '';
     
+    // Log dettagliato del processo di autenticazione
+    console.log(`🔐 [${requestId}] Inizio processo autenticazione Fatture in Cloud...`);
+    
     // Ottieni il token OAuth2 e company ID prima di calcolare il numero
     const accessToken = await getValidToken();
     const companyId = await getConfig('FIC_COMPANY_ID');
     
+    console.log(`✅ [${requestId}] Autenticazione completata:`, {
+      hasToken: !!accessToken,
+      tokenLength: accessToken ? accessToken.length : 0,
+      companyId: companyId
+    });
+    
     // 🔍 CONTROLLO DUPLICATI: Verifica se esiste già una ricevuta per questo ordine
+    console.log(`🔍 [${requestId}] Controllo duplicati per ordine ${shopifyOrderId}...`);
     const existingReceipt = await checkExistingReceipt(accessToken, companyId, shopifyOrderId, order_number || name);
     if (existingReceipt) {
-      console.log(`⚠️ RICEVUTA DUPLICATA BLOCCATA per ordine ${shopifyOrderId}`);
+      processingOrders.delete(shopifyOrderId);
+      console.log(`⚠️ [${requestId}] RICEVUTA DUPLICATA BLOCCATA per ordine ${shopifyOrderId}:`, {
+        receipt_id: existingReceipt.id,
+        number: existingReceipt.number,
+        amount: existingReceipt.amount_gross,
+        date: existingReceipt.date
+      });
       return res.status(200).json({
         success: true,
         duplicate: true,
         message: "Ricevuta già esistente per questo ordine",
+        requestId,
         existing_receipt: {
           id: existingReceipt.id,
           number: existingReceipt.number,
@@ -292,9 +378,12 @@ async function handler(req, res) {
         }
       });
     }
+    console.log(`✅ [${requestId}] Nessun duplicato trovato, procedo con la creazione`);
     
     // Ottieni il prossimo numero di ricevuta
+    console.log(`🔢 [${requestId}] Calcolo prossimo numero ricevuta...`);
     let nextReceiptNumber = await getNextReceiptNumber(accessToken, companyId);
+    console.log(`📋 [${requestId}] Numero ricevuta assegnato: ${nextReceiptNumber}`);
 
     // 🔧 CORREZIONE CALCOLO IMPORTI
     // Shopify invia prezzi già scontati nei line_items, ma dobbiamo usare i prezzi originali
@@ -629,15 +718,16 @@ async function handler(req, res) {
       });
     }
 
-    console.log("✅ Ricevuta creata con successo:", {
+    console.log(`✅ [${requestId}] Ricevuta creata con successo:`, {
       receipt_id: data.data?.id,
       number: data.data?.number,
       amount: data.data?.amount_gross,
-      customer: `${first_name} ${last_name}`,
+      customer: `${customer.first_name} ${customer.last_name}`,
       payment_status: isInstantPayment && paymentAccount ? 'automatically_paid' : (isInstantPayment ? 'manual_payment_required' : 'not_paid'),
       payment_gateway: payment_gateway_names?.[0] || 'unknown',
       auto_paid: isInstantPayment && paymentAccount,
-      payment_account_used: paymentAccount?.name || null
+      payment_account_used: paymentAccount?.name || null,
+      requestId
     });
 
     // ATTIVAZIONE WEBHOOK INTERNO: Chiamiamo direttamente il nostro webhook
@@ -645,7 +735,7 @@ async function handler(req, res) {
     let emailResult = { success: false, reason: 'Webhook interno non chiamato' };
     
     try {
-      console.log("🔔 Attivazione webhook interno per invio email...");
+      console.log(`🔔 [${requestId}] Attivazione webhook interno per invio email...`);
       
       // Simula il payload che Fatture in Cloud invierebbe al webhook
       // Includiamo anche i dati originali del cliente per l'invio email
@@ -656,10 +746,10 @@ async function handler(req, res) {
         },
         // Aggiungiamo i dati originali del cliente per l'email
         original_customer: {
-          email: email,
-          first_name: first_name,
-          last_name: last_name,
-          phone: phone
+          email: customer.email,
+          first_name: customer.first_name,
+          last_name: customer.last_name,
+          phone: customerPhone
         },
         shopify_order: {
           id: shopifyOrderId,
@@ -667,8 +757,18 @@ async function handler(req, res) {
         }
       };
       
+      console.log(`📤 [${requestId}] Payload webhook interno:`, {
+        type: webhookPayload.type,
+        receipt_id: webhookPayload.data.entity?.id,
+        customer_email: webhookPayload.original_customer?.email,
+        shopify_order_id: webhookPayload.shopify_order?.id
+      });
+      
+      const webhookUrl = `${req.headers.origin || 'https://nutra-backup.vercel.app'}/api/ricevutecloud`;
+      console.log(`🌐 [${requestId}] Chiamata webhook URL: ${webhookUrl}`);
+      
       // Chiama il nostro endpoint webhook interno
-      const webhookResponse = await fetch(`${req.headers.origin || 'https://nutra-backup.vercel.app'}/api/ricevutecloud`, {
+      const webhookResponse = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -679,7 +779,12 @@ async function handler(req, res) {
       
       if (webhookResponse.ok) {
         const webhookResult = await webhookResponse.json();
-        console.log("✅ Webhook interno chiamato con successo:", webhookResult);
+        console.log(`✅ [${requestId}] Webhook interno chiamato con successo:`, {
+          success: webhookResult.success || webhookResult.emailSent || false,
+          emailSent: webhookResult.emailSent,
+          messageId: webhookResult.messageId,
+          pdfStatus: webhookResult.pdfStatus
+        });
         emailResult = { 
           success: webhookResult.success || webhookResult.emailSent || false, 
           reason: 'Webhook interno attivato',
@@ -687,7 +792,11 @@ async function handler(req, res) {
         };
       } else {
         const errorText = await webhookResponse.text();
-        console.warn("⚠️ Errore chiamata webhook interno:", webhookResponse.status, errorText);
+        console.warn(`⚠️ [${requestId}] Errore chiamata webhook interno:`, {
+          status: webhookResponse.status,
+          statusText: webhookResponse.statusText,
+          error: errorText
+        });
         emailResult = { 
           success: false, 
           error: `Webhook error: ${webhookResponse.status} - ${errorText}` 
@@ -695,7 +804,10 @@ async function handler(req, res) {
       }
       
     } catch (webhookError) {
-      console.error("❌ Errore durante chiamata webhook interno:", webhookError);
+      console.error(`❌ [${requestId}] Errore durante chiamata webhook interno:`, {
+        error: webhookError.message,
+        stack: webhookError.stack
+      });
       emailResult = { success: false, error: webhookError.message };
     }
 
@@ -727,20 +839,32 @@ async function handler(req, res) {
     
     // Rimuovi l'ordine dalla mappa di elaborazione
     processingOrders.delete(shopifyOrderId);
-    console.log(`✅ Ordine ${shopifyOrderId} completato e rimosso dalla coda di elaborazione`);
+    console.log(`✅ [${requestId}] Ordine ${shopifyOrderId} completato e rimosso dalla coda di elaborazione`);
+    console.log(`🆔 [${requestId}] ==================== FINE ELABORAZIONE RICEVUTA ====================`);
+    
+    // Aggiungi requestId alla risposta finale
+    finalResponse.requestId = requestId;
     
     return res.status(200).json(finalResponse);
   } catch (error) {
     // In caso di errore, assicurati di rimuovere l'ordine dalla mappa
     if (req.body && req.body.id) {
       processingOrders.delete(req.body.id);
-      console.log(`⚠️ Errore durante l'elaborazione dell'ordine ${req.body.id} - Rimosso dalla coda`);
+      console.log(`⚠️ [${requestId}] Errore durante l'elaborazione dell'ordine ${req.body.id} - Rimosso dalla coda`);
     }
     
-    console.error("❌ Errore durante la creazione della ricevuta:", error);
+    console.error(`❌ [${requestId}] Errore durante la creazione della ricevuta:`, {
+      error: error.message,
+      stack: error.stack,
+      shopifyOrderId: req.body?.id,
+      timestamp: new Date().toISOString()
+    });
+    console.log(`🆔 [${requestId}] ==================== ERRORE ELABORAZIONE RICEVUTA ====================`);
+    
     return res.status(500).json({ 
       error: "Errore durante la creazione della ricevuta", 
-      message: error.message 
+      message: error.message,
+      requestId
     });
   }
 }
