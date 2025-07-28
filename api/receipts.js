@@ -179,6 +179,27 @@ async function getNextReceiptNumber(accessToken, companyId, retryCount = 0) {
   }
 }
 
+// Funzione per loggare in formato CSV
+function logToCSV(requestId, event, data) {
+  const timestamp = new Date().toISOString();
+  const csvData = {
+    timestamp,
+    requestId,
+    event,
+    ...data
+  };
+  
+  // Converte l'oggetto in una riga CSV
+  const csvRow = Object.values(csvData).map(value => {
+    if (typeof value === 'object' && value !== null) {
+      return `"${JSON.stringify(value).replace(/"/g, '""')}"`;
+    }
+    return `"${String(value).replace(/"/g, '""')}"`;
+  }).join(',');
+  
+  console.log(`📊 CSV_LOG: ${csvRow}`);
+}
+
 // Funzione per verificare se una ricevuta esiste già per questo ordine
 async function checkExistingReceipt(accessToken, companyId, shopifyOrderId, orderNumber) {
   const checkId = `CHK_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
@@ -272,9 +293,23 @@ async function handler(req, res) {
   try {
     console.log(`🆔 [${requestId}] ==================== INIZIO ELABORAZIONE RICEVUTA ====================`);
     
+    // Log CSV per inizio richiesta
+    logToCSV(requestId, 'REQUEST_START', {
+      shopifyOrderId: req.body?.id,
+      method: req.method,
+      userAgent: req.headers['user-agent'],
+      origin: req.headers.origin
+    });
+    
     // Validazione dati in ingresso
     if (!req.body || !req.body.customer || !req.body.line_items) {
       console.log(`❌ [${requestId}] Dati ordine Shopify mancanti`);
+      logToCSV(requestId, 'ERROR_VALIDATION', {
+        error: 'Dati ordine Shopify mancanti',
+        hasBody: !!req.body,
+        hasCustomer: !!req.body?.customer,
+        hasLineItems: !!req.body?.line_items
+      });
       return res.status(400).json({ 
         error: "Dati ordine Shopify mancanti", 
         required: ["customer", "line_items", "total_price"],
@@ -300,6 +335,17 @@ async function handler(req, res) {
       referer: req.headers.referer
     });
 
+    // Log CSV per dati ordine
+    logToCSV(requestId, 'ORDER_DATA', {
+      shopifyOrderId,
+      orderNumber: order_number || name,
+      customerEmail: customer?.email,
+      customerName: `${customer?.first_name} ${customer?.last_name}`,
+      totalPrice: total_price,
+      paymentGateway: payment_gateway_names?.[0] || 'unknown',
+      financialStatus: financial_status
+    });
+
     // Log stato attuale della mappa di elaborazione
     console.log(`📊 [${requestId}] Stato processingOrders:`, {
       size: processingOrders.size,
@@ -315,6 +361,13 @@ async function handler(req, res) {
       const startTime = processingOrders.get(shopifyOrderId);
       const duration = Date.now() - startTime.getTime();
       console.log(`⚠️ [${requestId}] ORDINE ${shopifyOrderId} GIÀ IN ELABORAZIONE da ${duration}ms - Richiesta ignorata`);
+      
+      logToCSV(requestId, 'CONCURRENT_REQUEST_BLOCKED', {
+        shopifyOrderId,
+        durationMs: duration,
+        processingOrdersSize: processingOrders.size
+      });
+      
       return res.status(429).json({
         success: false,
         error: "Ordine già in elaborazione",
@@ -327,6 +380,11 @@ async function handler(req, res) {
     // Segna l'ordine come in elaborazione
     processingOrders.set(shopifyOrderId, new Date());
     console.log(`🔄 [${requestId}] Ordine ${shopifyOrderId} aggiunto alla coda di elaborazione`);
+    
+    logToCSV(requestId, 'PROCESSING_STARTED', {
+      shopifyOrderId,
+      processingOrdersSize: processingOrders.size
+    });
     
     // Log delle informazioni di pagamento per debug
     console.log("💳 Informazioni pagamento Shopify:", {
@@ -373,6 +431,14 @@ async function handler(req, res) {
         amount: existingReceipt.amount_gross,
         date: existingReceipt.date
       });
+      
+      logToCSV(requestId, 'DUPLICATE_BLOCKED', {
+        shopifyOrderId,
+        existingReceiptId: existingReceipt.id,
+        existingReceiptNumber: existingReceipt.number,
+        existingReceiptAmount: existingReceipt.amount_gross
+      });
+      
       return res.status(200).json({
         success: true,
         duplicate: true,
@@ -387,6 +453,10 @@ async function handler(req, res) {
       });
     }
     console.log(`✅ [${requestId}] Nessun duplicato trovato, procedo con la creazione`);
+    
+    logToCSV(requestId, 'DUPLICATE_CHECK_PASSED', {
+      shopifyOrderId
+    });
     
     // Ottieni il prossimo numero di ricevuta
     console.log(`🔢 [${requestId}] Calcolo prossimo numero ricevuta...`);
@@ -738,6 +808,16 @@ async function handler(req, res) {
       requestId
     });
 
+    logToCSV(requestId, 'RECEIPT_CREATED', {
+      shopifyOrderId,
+      receiptId: data.data?.id,
+      receiptNumber: data.data?.number,
+      receiptAmount: data.data?.amount_gross,
+      paymentStatus: isInstantPayment && paymentAccount ? 'automatically_paid' : (isInstantPayment ? 'manual_payment_required' : 'not_paid'),
+      paymentGateway: payment_gateway_names?.[0] || 'unknown',
+      autoPaid: isInstantPayment && paymentAccount
+    });
+
     // ATTIVAZIONE WEBHOOK INTERNO: Chiamiamo direttamente il nostro webhook
     // invece di aspettare che Fatture in Cloud lo faccia
     let emailResult = { success: false, reason: 'Webhook interno non chiamato' };
@@ -850,6 +930,14 @@ async function handler(req, res) {
     console.log(`✅ [${requestId}] Ordine ${shopifyOrderId} completato e rimosso dalla coda di elaborazione`);
     console.log(`🆔 [${requestId}] ==================== FINE ELABORAZIONE RICEVUTA ====================`);
     
+    logToCSV(requestId, 'REQUEST_COMPLETED', {
+      shopifyOrderId,
+      success: true,
+      emailSent: emailResult.success,
+      finalStatus,
+      processingOrdersSize: processingOrders.size
+    });
+    
     // Aggiungi requestId alla risposta finale
     finalResponse.requestId = requestId;
     
@@ -868,6 +956,13 @@ async function handler(req, res) {
       timestamp: new Date().toISOString()
     });
     console.log(`🆔 [${requestId}] ==================== ERRORE ELABORAZIONE RICEVUTA ====================`);
+    
+    logToCSV(requestId, 'REQUEST_ERROR', {
+      shopifyOrderId: req.body?.id,
+      error: error.message,
+      success: false,
+      processingOrdersSize: processingOrders.size
+    });
     
     return res.status(500).json({ 
       error: "Errore durante la creazione della ricevuta", 
