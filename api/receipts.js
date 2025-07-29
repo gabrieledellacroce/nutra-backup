@@ -212,8 +212,9 @@ async function checkExistingReceipt(accessToken, companyId, shopifyOrderId, orde
     });
 
     // L'API richiede obbligatoriamente il parametro type
-    // Aggiungo anche fields per includere le note necessarie per il controllo duplicati
-    const searchUrl = `https://api-v2.fattureincloud.it/c/${companyId}/issued_documents?type=receipt&fields=id,number,date,amount_gross,entity,notes`;
+    // Limito a 20 ricevute recenti e ordino per data decrescente per efficienza
+    // Le note potrebbero non essere disponibili in questo endpoint, quindi controllo anche entity.name
+    const searchUrl = `https://api-v2.fattureincloud.it/c/${companyId}/issued_documents?type=receipt&fields=id,number,date,amount_gross,entity&per_page=20&sort=-date`;
     
     console.log(`🌐 [${checkId}] Chiamata API ricerca ricevute (senza query):`, {
       url: searchUrl,
@@ -258,30 +259,27 @@ async function checkExistingReceipt(accessToken, companyId, shopifyOrderId, orde
       
       // Controlla ogni ricevuta trovata
       for (const receipt of data.data) {
+        // Controllo rapido solo sui campi disponibili
+        const entityName = receipt.entity?.name || '';
+        const entityCode = receipt.entity?.code || '';
+        const entityEmail = receipt.entity?.email || '';
+        
         console.log(`🔎 [${checkId}] Controllo ricevuta ${receipt.id}:`, {
           number: receipt.number,
           date: receipt.date,
           amount: receipt.amount_gross,
-          entity: receipt.entity,
-          documentNotes: receipt.notes || 'N/A',
-          entityNotes: receipt.entity?.notes || 'N/A'
+          entityName,
+          entityEmail,
+          entityCode
         });
-
-        // Verifica se le note contengono l'ID ordine Shopify
-        // Controlla sia nelle note del documento che dell'entità e in altri campi possibili
-        const documentNotes = receipt.notes || '';
-        const entityNotes = receipt.entity?.notes || '';
-        const entityName = receipt.entity?.name || '';
-        const entityCode = receipt.entity?.code || '';
         
-        if (documentNotes.includes(`Shopify-ID:${shopifyOrderId}`) || 
-            documentNotes.includes(`Ordine: ${orderNumber}`) ||
-            documentNotes.includes(shopifyOrderId.toString()) ||
-            entityNotes.includes(`Shopify-ID:${shopifyOrderId}`) || 
-            entityNotes.includes(`Ordine: ${orderNumber}`) ||
-            entityNotes.includes(shopifyOrderId.toString()) ||
-            entityName.includes(shopifyOrderId.toString()) ||
-            entityCode.includes(shopifyOrderId.toString())) {
+        // Verifica se i campi dell'entità contengono l'ID ordine Shopify
+        // Controllo ottimizzato per il nuovo formato [Shopify:ID]
+        if (entityName.includes(`[Shopify:${shopifyOrderId}]`) ||
+            entityCode.includes(shopifyOrderId.toString()) ||
+            entityEmail.includes(shopifyOrderId.toString()) ||
+            entityName.includes(`Ordine: ${orderNumber}`) ||
+            entityCode.includes(`Ordine: ${orderNumber}`)) {
           
           console.log(`✅ [${checkId}] DUPLICATO TROVATO! Ricevuta ${receipt.id} contiene riferimento all'ordine ${shopifyOrderId}`);
           return receipt;
@@ -627,7 +625,7 @@ async function handler(req, res) {
       data: {
         type: "receipt",
         entity: {
-          name: `${first_name} ${last_name}`,
+          name: `${first_name} ${last_name} [Shopify:${shopifyOrderId}]`,
           email: email,
           phone: customerPhone,
           address_street: billing_address?.address1 || '',
