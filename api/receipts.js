@@ -213,7 +213,7 @@ async function checkExistingReceipt(accessToken, companyId, shopifyOrderId, orde
 
     // L'API richiede obbligatoriamente il parametro type
     // Limito a 20 ricevute recenti e ordino per data decrescente per efficienza
-    // Le note potrebbero non essere disponibili in questo endpoint, quindi controllo anche entity.name
+    // Includo il campo code per controllare i codici cliente con ID Shopify
     const searchUrl = `https://api-v2.fattureincloud.it/c/${companyId}/issued_documents?type=receipt&fields=id,number,date,amount_gross,entity&per_page=20&sort=-date`;
     
     console.log(`🌐 [${checkId}] Chiamata API ricerca ricevute (senza query):`, {
@@ -274,14 +274,14 @@ async function checkExistingReceipt(accessToken, companyId, shopifyOrderId, orde
         });
         
         // Verifica se i campi dell'entità contengono l'ID ordine Shopify
-        // Controllo ottimizzato per il nuovo formato [Shopify:ID]
-        if (entityName.includes(`[Shopify:${shopifyOrderId}]`) ||
-            entityCode.includes(shopifyOrderId.toString()) ||
+        // Controllo ottimizzato per il nuovo formato SHOPIFY-ID nel campo code
+        if (entityCode.includes(`SHOPIFY-${shopifyOrderId}`) ||
+            entityName.includes(shopifyOrderId.toString()) ||
             entityEmail.includes(shopifyOrderId.toString()) ||
             entityName.includes(`Ordine: ${orderNumber}`) ||
             entityCode.includes(`Ordine: ${orderNumber}`)) {
           
-          console.log(`✅ [${checkId}] DUPLICATO TROVATO! Ricevuta ${receipt.id} contiene riferimento all'ordine ${shopifyOrderId}`);
+          console.log(`✅ [${checkId}] DUPLICATO TROVATO! Ricevuta ${receipt.id} contiene codice SHOPIFY-${shopifyOrderId}`);
           return receipt;
         }
       }
@@ -625,7 +625,8 @@ async function handler(req, res) {
       data: {
         type: "receipt",
         entity: {
-          name: `${first_name} ${last_name} [Shopify:${shopifyOrderId}]`,
+          name: `${first_name} ${last_name}`,
+          code: `SHOPIFY-${shopifyOrderId}`,
           email: email,
           phone: customerPhone,
           address_street: billing_address?.address1 || '',
