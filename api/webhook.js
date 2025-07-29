@@ -13,10 +13,19 @@ module.exports = async function handler(req, res) {
     
     const { type, data } = req.body;
 
+    // Log del tipo di evento per debugging
+    console.log('🔍 Tipo evento webhook:', type);
+
     // Verifica che sia un evento di ricevuta
     if (!type || !type.includes('receipts')) {
       console.log('⚠️ Evento ignorato, non è una ricevuta:', type);
       return res.status(200).json({ message: 'Event ignored - not a receipt' });
+    }
+
+    // NUOVO: Filtra solo eventi di creazione, ignora aggiornamenti per evitare duplicati
+    if (type.includes('update')) {
+      console.log('⚠️ Evento UPDATE ignorato per evitare duplicati:', type);
+      return res.status(200).json({ message: 'Event ignored - update event (avoiding duplicates)' });
     }
 
     // Estrai i dati della ricevuta
