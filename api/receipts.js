@@ -211,9 +211,9 @@ async function checkExistingReceipt(accessToken, companyId, shopifyOrderId, orde
       companyId
     });
 
-    // Chiamata API semplificata per evitare errori 422
-    // Rimuovo tutti i parametri che potrebbero causare problemi
-    const searchUrl = `https://api-v2.fattureincloud.it/c/${companyId}/issued_documents`;
+    // L'API richiede obbligatoriamente il parametro type
+    // Aggiungo solo il minimo necessario per evitare errori 422
+    const searchUrl = `https://api-v2.fattureincloud.it/c/${companyId}/issued_documents?type=receipt`;
     
     console.log(`🌐 [${checkId}] Chiamata API ricerca ricevute (senza query):`, {
       url: searchUrl,
@@ -254,12 +254,10 @@ async function checkExistingReceipt(accessToken, companyId, shopifyOrderId, orde
     });
 
     if (data.data && data.data.length > 0) {
-      // Filtra solo le ricevute (type=receipt)
-      const receipts = data.data.filter(doc => doc.type === 'receipt');
-      console.log(`📋 [${checkId}] Ricevute filtrate: ${receipts.length} su ${data.data.length} documenti totali`);
+      console.log(`📋 [${checkId}] Ricevute trovate: ${data.data.length}`);
       
       // Controlla ogni ricevuta trovata
-      for (const receipt of receipts) {
+      for (const receipt of data.data) {
         console.log(`🔎 [${checkId}] Controllo ricevuta ${receipt.id}:`, {
           number: receipt.number,
           date: receipt.date,
@@ -285,7 +283,7 @@ async function checkExistingReceipt(accessToken, companyId, shopifyOrderId, orde
         }
       }
       
-      console.log(`🔍 [${checkId}] Nessun duplicato trovato tra le ${receipts.length} ricevute esaminate`);
+      console.log(`🔍 [${checkId}] Nessun duplicato trovato tra le ${data.data.length} ricevute esaminate`);
     } else {
       console.log(`📭 [${checkId}] Nessuna ricevuta trovata`);
     }
