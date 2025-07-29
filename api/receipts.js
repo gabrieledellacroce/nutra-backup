@@ -212,8 +212,8 @@ async function checkExistingReceipt(accessToken, companyId, shopifyOrderId, orde
     });
 
     // L'API richiede obbligatoriamente il parametro type
-    // Aggiungo solo il minimo necessario per evitare errori 422
-    const searchUrl = `https://api-v2.fattureincloud.it/c/${companyId}/issued_documents?type=receipt`;
+    // Aggiungo anche fields per includere le note necessarie per il controllo duplicati
+    const searchUrl = `https://api-v2.fattureincloud.it/c/${companyId}/issued_documents?type=receipt&fields=id,number,date,amount_gross,entity,notes`;
     
     console.log(`🌐 [${checkId}] Chiamata API ricerca ricevute (senza query):`, {
       url: searchUrl,
@@ -263,18 +263,23 @@ async function checkExistingReceipt(accessToken, companyId, shopifyOrderId, orde
           date: receipt.date,
           amount: receipt.amount_gross,
           entity: receipt.entity,
-          notes: receipt.entity?.notes || 'N/A'
+          documentNotes: receipt.notes || 'N/A',
+          entityNotes: receipt.entity?.notes || 'N/A'
         });
 
         // Verifica se le note contengono l'ID ordine Shopify
-        // Controlla sia nelle note dell'entità che in altri campi possibili
-        const notes = receipt.entity?.notes || '';
+        // Controlla sia nelle note del documento che dell'entità e in altri campi possibili
+        const documentNotes = receipt.notes || '';
+        const entityNotes = receipt.entity?.notes || '';
         const entityName = receipt.entity?.name || '';
         const entityCode = receipt.entity?.code || '';
         
-        if (notes.includes(`Shopify-ID:${shopifyOrderId}`) || 
-            notes.includes(`Ordine: ${orderNumber}`) ||
-            notes.includes(shopifyOrderId.toString()) ||
+        if (documentNotes.includes(`Shopify-ID:${shopifyOrderId}`) || 
+            documentNotes.includes(`Ordine: ${orderNumber}`) ||
+            documentNotes.includes(shopifyOrderId.toString()) ||
+            entityNotes.includes(`Shopify-ID:${shopifyOrderId}`) || 
+            entityNotes.includes(`Ordine: ${orderNumber}`) ||
+            entityNotes.includes(shopifyOrderId.toString()) ||
             entityName.includes(shopifyOrderId.toString()) ||
             entityCode.includes(shopifyOrderId.toString())) {
           
