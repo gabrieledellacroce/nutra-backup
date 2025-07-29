@@ -211,9 +211,9 @@ async function checkExistingReceipt(accessToken, companyId, shopifyOrderId, orde
       companyId
     });
 
-    // Invece di usare la ricerca con 'q', prendiamo i documenti recenti e li filtriamo
-    // Questo evita problemi con l'encoding della query e il parametro type
-    const searchUrl = `https://api-v2.fattureincloud.it/c/${companyId}/issued_documents?fields=id,number,date,amount_gross,entity,type&per_page=50&sort=-date`;
+    // Chiamata API semplificata per evitare errori 422
+    // Rimuovo tutti i parametri che potrebbero causare problemi
+    const searchUrl = `https://api-v2.fattureincloud.it/c/${companyId}/issued_documents`;
     
     console.log(`🌐 [${checkId}] Chiamata API ricerca ricevute (senza query):`, {
       url: searchUrl,
@@ -229,18 +229,28 @@ async function checkExistingReceipt(accessToken, companyId, shopifyOrderId, orde
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
       console.error(`❌ [${checkId}] Errore API ricerca ricevute:`, {
         status: response.status,
-        statusText: response.statusText
+        statusText: response.statusText,
+        errorBody: errorText,
+        url: searchUrl
       });
       return null;
     }
 
     const data = await response.json();
-    console.log(`📊 [${checkId}] Risultati ricerca:`, {
-      totalFound: data.data?.length || 0,
+    console.log(`📊 [${checkId}] Risposta API completa:`, {
+      hasData: !!data.data,
+      dataLength: data.data?.length || 0,
       currentPage: data.current_page,
-      totalPages: data.last_page
+      totalPages: data.last_page,
+      firstItemSample: data.data?.[0] ? {
+        id: data.data[0].id,
+        type: data.data[0].type,
+        hasEntity: !!data.data[0].entity,
+        entityKeys: data.data[0].entity ? Object.keys(data.data[0].entity) : []
+      } : null
     });
 
     if (data.data && data.data.length > 0) {
