@@ -211,9 +211,9 @@ async function checkExistingReceipt(accessToken, companyId, shopifyOrderId, orde
       companyId
     });
 
-    // Invece di usare la ricerca con 'q', prendiamo le ricevute recenti e le filtriamo
-    // Questo evita problemi con l'encoding della query
-    const searchUrl = `https://api-v2.fattureincloud.it/c/${companyId}/issued_documents?type=receipt&fields=id,number,date,amount_gross,entity.notes&per_page=50&sort=-date`;
+    // Invece di usare la ricerca con 'q', prendiamo i documenti recenti e li filtriamo
+    // Questo evita problemi con l'encoding della query e il parametro type
+    const searchUrl = `https://api-v2.fattureincloud.it/c/${companyId}/issued_documents?fields=id,number,date,amount_gross,entity,type&per_page=50&sort=-date`;
     
     console.log(`🌐 [${checkId}] Chiamata API ricerca ricevute (senza query):`, {
       url: searchUrl,
@@ -244,27 +244,38 @@ async function checkExistingReceipt(accessToken, companyId, shopifyOrderId, orde
     });
 
     if (data.data && data.data.length > 0) {
+      // Filtra solo le ricevute (type=receipt)
+      const receipts = data.data.filter(doc => doc.type === 'receipt');
+      console.log(`📋 [${checkId}] Ricevute filtrate: ${receipts.length} su ${data.data.length} documenti totali`);
+      
       // Controlla ogni ricevuta trovata
-      for (const receipt of data.data) {
+      for (const receipt of receipts) {
         console.log(`🔎 [${checkId}] Controllo ricevuta ${receipt.id}:`, {
           number: receipt.number,
           date: receipt.date,
           amount: receipt.amount_gross,
+          entity: receipt.entity,
           notes: receipt.entity?.notes || 'N/A'
         });
 
         // Verifica se le note contengono l'ID ordine Shopify
+        // Controlla sia nelle note dell'entità che in altri campi possibili
         const notes = receipt.entity?.notes || '';
+        const entityName = receipt.entity?.name || '';
+        const entityCode = receipt.entity?.code || '';
+        
         if (notes.includes(`Shopify-ID:${shopifyOrderId}`) || 
             notes.includes(`Ordine: ${orderNumber}`) ||
-            notes.includes(shopifyOrderId.toString())) {
+            notes.includes(shopifyOrderId.toString()) ||
+            entityName.includes(shopifyOrderId.toString()) ||
+            entityCode.includes(shopifyOrderId.toString())) {
           
           console.log(`✅ [${checkId}] DUPLICATO TROVATO! Ricevuta ${receipt.id} contiene riferimento all'ordine ${shopifyOrderId}`);
           return receipt;
         }
       }
       
-      console.log(`🔍 [${checkId}] Nessun duplicato trovato tra le ${data.data.length} ricevute esaminate`);
+      console.log(`🔍 [${checkId}] Nessun duplicato trovato tra le ${receipts.length} ricevute esaminate`);
     } else {
       console.log(`📭 [${checkId}] Nessuna ricevuta trovata`);
     }
