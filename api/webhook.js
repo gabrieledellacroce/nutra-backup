@@ -1,6 +1,7 @@
 // Endpoint webhook per ricevere notifiche da Fatture in Cloud
 const { sendReceiptEmail, checkEmailConfiguration } = require('./email.js');
 const { getConfigWithFallback } = require('./config.js');
+const { saveWebhookLog } = require('./webhook-logs.js');
 
 module.exports = async function handler(req, res) {
   // Accetta solo POST
@@ -16,15 +17,36 @@ module.exports = async function handler(req, res) {
     // Log del tipo di evento per debugging
     console.log('🔍 Tipo evento webhook:', type);
 
+    // LOGGING PERSISTENTE - Salva sempre tutti i webhook ricevuti
+    await saveWebhookLog({
+      type: type,
+      action: 'received',
+      receiptId: data?.entity?.id || data?.id,
+      receiptNumber: data?.entity?.number || data?.number,
+      customerName: data?.entity?.entity?.name || data?.entity?.name,
+      rawData: req.body
+    });
+
     // Verifica che sia un evento di ricevuta
     if (!type || !type.includes('receipts')) {
       console.log('⚠️ Evento ignorato, non è una ricevuta:', type);
+      await saveWebhookLog({
+        type: type,
+        action: 'ignored_not_receipt',
+        reason: 'Not a receipt event'
+      });
       return res.status(200).json({ message: 'Event ignored - not a receipt' });
     }
 
     // NUOVO: Filtra solo eventi di creazione, ignora aggiornamenti per evitare duplicati
     if (type.includes('update')) {
       console.log('⚠️ Evento UPDATE ignorato per evitare duplicati:', type);
+      await saveWebhookLog({
+        type: type,
+        action: 'ignored_update',
+        reason: 'Update event filtered to avoid duplicates',
+        receiptId: data?.entity?.id || data?.id
+      });
       return res.status(200).json({ message: 'Event ignored - update event (avoiding duplicates)' });
     }
 
@@ -117,6 +139,17 @@ module.exports = async function handler(req, res) {
           receiptNumber: receipt.number
         });
         
+        // Log successo invio email
+        await saveWebhookLog({
+          type: type,
+          action: 'email_sent_success',
+          receiptId: receipt.id,
+          receiptNumber: receipt.number,
+          customerEmail: customerEmail,
+          messageId: emailResult.messageId,
+          hasPDF: emailResult.hasPDF
+        });
+        
         return res.status(200).json({ 
           success: true, 
           message: 'Email sent successfully',
@@ -127,6 +160,16 @@ module.exports = async function handler(req, res) {
         });
       } else {
         console.warn('⚠️ Errore invio email via webhook:', emailResult.error);
+        
+        // Log errore invio email
+        await saveWebhookLog({
+          type: type,
+          action: 'email_sent_failed',
+          receiptId: receipt.id,
+          receiptNumber: receipt.number,
+          customerEmail: customerEmail,
+          error: emailResult.error
+        });
         
         return res.status(200).json({ 
           success: true, 
