@@ -70,10 +70,24 @@ module.exports = async function handler(req, res) {
       customerEmail = receipt.entity?.email;
       customerName = receipt.entity?.name;
       console.log('👤 Utilizzando dati cliente da ricevuta FIC:', { email: customerEmail, name: customerName });
+      
+      // 🔍 NUOVO: Se email vuota, prova a estrarla dalle note
+      if (!customerEmail && receipt.notes) {
+        const emailMatch = receipt.notes.match(/Email:\s*([^\s-]+@[^\s-]+)/);
+        if (emailMatch) {
+          customerEmail = emailMatch[1];
+          console.log('📧 Email estratta dalle note della ricevuta:', customerEmail);
+        }
+      }
     }
     
     if (!customerEmail) {
-      console.log('⚠️ Email cliente non trovata nella ricevuta');
+      console.log('⚠️ Email cliente non trovata nella ricevuta o nelle note');
+      console.log('🔍 Debug - Dati disponibili:', {
+        hasOriginalCustomer: !!req.body.original_customer,
+        entityEmail: receipt.entity?.email,
+        notes: receipt.notes
+      });
       return res.status(200).json({ 
         success: true, 
         message: 'No customer email found' 
