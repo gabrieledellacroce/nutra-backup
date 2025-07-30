@@ -213,8 +213,8 @@ async function checkExistingReceipt(accessToken, companyId, shopifyOrderId, orde
 
     // L'API richiede obbligatoriamente il parametro type
     // Limito a 20 ricevute recenti e ordino per data decrescente per efficienza
-    // Includo il campo code per controllare i codici cliente con ID Shopify
-    const searchUrl = `https://api-v2.fattureincloud.it/c/${companyId}/issued_documents?type=receipt&fields=id,number,date,amount_gross,entity&per_page=20&sort=-date`;
+    // Includo il campo notes per controllare l'ID Shopify nelle note
+    const searchUrl = `https://api-v2.fattureincloud.it/c/${companyId}/issued_documents?type=receipt&fields=id,number,date,amount_gross,entity,notes&per_page=20&sort=-date`;
     
     console.log(`🌐 [${checkId}] Chiamata API ricerca ricevute (senza query):`, {
       url: searchUrl,
@@ -263,6 +263,7 @@ async function checkExistingReceipt(accessToken, companyId, shopifyOrderId, orde
         const entityName = receipt.entity?.name || '';
         const entityCode = receipt.entity?.code || '';
         const entityEmail = receipt.entity?.email || '';
+        const receiptNotes = receipt.notes || '';
         
         console.log(`🔎 [${checkId}] Controllo ricevuta ${receipt.id}:`, {
           number: receipt.number,
@@ -270,18 +271,22 @@ async function checkExistingReceipt(accessToken, companyId, shopifyOrderId, orde
           amount: receipt.amount_gross,
           entityName,
           entityEmail,
-          entityCode
+          entityCode,
+          hasNotes: !!receiptNotes,
+          notesPreview: receiptNotes.substring(0, 100)
         });
         
-        // Verifica se i campi dell'entità contengono l'ID ordine Shopify
-        // Controllo ottimizzato per il nuovo formato SHOPIFY-ID nel campo code
+        // Verifica se i campi dell'entità o le note contengono l'ID ordine Shopify
+        // Controllo ottimizzato per il nuovo formato SHOPIFY-ID nel campo code E nelle notes
         if (entityCode.includes(`SHOPIFY-${shopifyOrderId}`) ||
             entityName.includes(shopifyOrderId.toString()) ||
             entityEmail.includes(shopifyOrderId.toString()) ||
             entityName.includes(`Ordine: ${orderNumber}`) ||
-            entityCode.includes(`Ordine: ${orderNumber}`)) {
+            entityCode.includes(`Ordine: ${orderNumber}`) ||
+            receiptNotes.includes(`Shopify-ID:${shopifyOrderId}`) ||
+            receiptNotes.includes(`Ordine: ${orderNumber}`)) {
           
-          console.log(`✅ [${checkId}] DUPLICATO TROVATO! Ricevuta ${receipt.id} contiene codice SHOPIFY-${shopifyOrderId}`);
+          console.log(`✅ [${checkId}] DUPLICATO TROVATO! Ricevuta ${receipt.id} contiene riferimento all'ordine Shopify ${shopifyOrderId}`);
           return receipt;
         }
       }
@@ -314,6 +319,9 @@ async function handler(req, res) {
   
   try {
     console.log(`🆔 [${requestId}] ==================== INIZIO ELABORAZIONE RICEVUTA ====================`);
+    
+    // 🔍 LOG COMPLETO DEL WEBHOOK SHOPIFY
+    console.log(`📦 [${requestId}] WEBHOOK SHOPIFY COMPLETO:`, JSON.stringify(req.body, null, 2));
     
     // Log CSV per inizio richiesta
     logToCSV(requestId, 'REQUEST_START', {
